@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molavi Prostate Quiz — 전립선 현미경 진단</title>
+<meta name="description" content="Bilingual (KR/EN) multiple-choice quiz on prostate pathology from Molavi, The Practice of Surgical Pathology — microscopic diagnosis, Gleason grading & grade group, mimickers/PIN/IHC, and radical prostatectomy margins/EPE. Each explanation says why the right answer is right and why each distractor is wrong.">
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --line:#2a2f3a; --txt:#e6e8ec; --sub:#9aa3b2;
+    --accent:#4f8cff; --good:#1f7a4d; --goodbg:#11321f; --bad:#9b2c2c; --badbg:#341515; --chip:#222733; --hdr:#202635;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --txt:#1c2128; --sub:#5b6472;
+      --accent:#2563eb; --good:#147a45; --goodbg:#e7f6ee; --bad:#b91c1c; --badbg:#fdeaea; --chip:#eef1f5; --hdr:#eaeefb; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo",Segoe UI,Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:800px;margin:0 auto;padding:20px 16px 80px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0 0 4px}
+  .meta{color:var(--sub);font-size:13px;margin-bottom:14px}
+  .score{position:sticky;top:0;background:var(--bg);padding:10px 0;color:var(--sub);font-size:13px;z-index:4;border-bottom:1px solid var(--line)}
+  .score b{color:var(--txt)}
+  .theme{background:var(--hdr);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin:18px 0 12px;font-weight:700;font-size:14px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 6px;margin-bottom:14px}
+  .qtxt{font-weight:600;margin-bottom:12px}
+  .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:transparent;color:var(--txt);
+    padding:11px 13px;border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:.12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.correct{background:var(--goodbg);border-color:var(--good)}
+  .opt.wrong{background:var(--badbg);border-color:var(--bad)}
+  .opt:disabled{cursor:default}
+  .exp{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);margin-top:4px;padding:10px 0;display:none}
+  .exp.show{display:block}
+  .exp b{color:var(--txt)}
+  .controls{display:flex;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--chip);color:var(--txt);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13px}
+  .btn.lang{border-color:var(--accent);color:var(--accent);font-weight:700}
+  .foot{color:var(--sub);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 id="title"></h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <button class="btn lang" id="langBtn"></button>
+  </div>
+
+  <div class="score" id="score"></div>
+  <div class="controls">
+    <button class="btn" id="resetBtn"></button>
+    <button class="btn" id="revealBtn"></button>
+  </div>
+  <div id="quiz"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const UI={
+  ko:{title:"Molavi 전립선 퀴즈 — 현미경 진단",
+    meta:"섹션 = Molavi Ch.11 소제목 그대로: Approach to the Core Biopsy · Gleason Grading · PIN · Mimickers · Atypical Glands and Stains · Radical Prostatectomy. 답을 누르면 즉시 채점 + 해설(정답 이유 + 오답이 왜 틀렸는지).",
+    reset:"다시 풀기", reveal:"정답 모두 보기", lang:"English", exp:"해설:",
+    score:(d,t,c)=>`푼 문제 <b>${d}/${t}</b> · 정답 <b>${c}</b>`,
+    foot:"학습용 — Molavi, The Practice of Surgical Pathology: A Beginner's Guide (Ch.11 Prostate) 기반. Grade Group은 ISUP/Epstein 2014. 최종은 기관 프로토콜·attending 확인."},
+  en:{title:"Molavi Prostate Quiz — Microscopic Diagnosis",
+    meta:"Sections = Molavi Ch.11 subheadings: Approach to the Core Biopsy · Gleason Grading · PIN · Mimickers · Atypical Glands and Stains · Radical Prostatectomy. Tap an answer for instant scoring + explanation (why right + why each distractor is wrong).",
+    reset:"Reset", reveal:"Reveal all answers", lang:"한국어", exp:"Explanation:",
+    score:(d,t,c)=>`answered <b>${d}/${t}</b> · correct <b>${c}</b>`,
+    foot:"Educational — based on Molavi, The Practice of Surgical Pathology: A Beginner's Guide (Ch.11 Prostate). Grade Group per ISUP/Epstein 2014. Always defer to your institution's protocols and attendings."}
+};
+const SEC={
+ s1:{ko:"Approach to the Core Biopsy · 핵생검 접근",en:"Approach to the Core Biopsy"},
+ s2:{ko:"Gleason Grading",en:"Gleason Grading"},
+ s3:{ko:"Prostatic Intraepithelial Neoplasia (PIN) · 전립선 상피내종양",en:"Prostatic Intraepithelial Neoplasia (PIN)"},
+ s4:{ko:"Mimickers of Prostate Cancer · 전립선암 모방 병변",en:"Mimickers of Prostate Cancer"},
+ s5:{ko:"Atypical Glands and Stains · 비정형 gland·면역염색",en:"Atypical Glands and Stains"},
+ s6:{ko:"Approach to the Radical Prostatectomy Specimen · 근치적 전립선절제 표본",en:"Approach to the Radical Prostatectomy Specimen"}
+};
+
+const Q=[
+// ===== BLOCK 1 =====
+{s:"s1",a:1,
+ ko:{q:"저배율(4–10×)로 core를 훑을 때, 양성 gland와 달리 '암 같다'고 가장 먼저 눈에 띄게 만드는 소견은?",
+   o:["Papillary infolding(주름)이 lumen으로 접혀 들어감","큰 양성 gland 사이로 작은 gland들이 침투 + crowded","Corpora amylacea가 보임","gland를 둘러싼 두꺼운 섬유성 stroma 반응"],
+   e:"저배율은 architecture+색으로 '수상한 놈'을 잡는 단계 — 작은 악성 gland가 큰 양성 gland 사이로 침투·crowded·cribriform. ①·③은 양성 단서(주름·동심원 결석), ④전립선암은 stroma 반응(desmoplasia)을 *안* 일으킴."},
+ en:{q:"On low power (4–10×), what first makes a focus 'stand out as cancer' compared with benign glands?",
+   o:["Papillary infoldings folding into the lumen","Small glands infiltrating among larger benign glands + crowding","Corpora amylacea are present","A thick desmoplastic stromal reaction around the glands"],
+   e:"Low power flags the suspect by architecture + color — small malignant glands infiltrating among larger benign glands, crowded/cribriform. ① and ③ are benign clues (infoldings, laminated concretions); ④ prostate cancer does NOT induce a desmoplastic reaction."}},
+{s:"s1",a:2,
+ ko:{q:"고배율(20–40×)에서 악성 gland를 확정하는 핵 소견 + 양성 대비 핵 다형성은?",
+   o:["심한 다형성 + smudgy chromatin","크고 빨간 nucleolus + 심한 다형성","크고 빨간(cherry-red) nucleolus, 핵 다형성은 *거의 없음*(단조로움)","핵소체 없음 + 각진 핵"],
+   e:"전립선암은 핵이 비교적 단조(monotonous)하고 **두드러진 nucleolus**로 잡는다 + basal층 소실 + 직선경계. ①·④는 오히려 양성(radiation·seminal vesicle은 *너무* 다형성), ②다형성이 심하면 전립선암 쪽이 아니다."},
+ en:{q:"On high power (20–40×), what nuclear feature confirms a malignant gland, and how pleomorphic are the nuclei vs benign?",
+   o:["Marked pleomorphism + smudgy chromatin","Large red nucleolus + marked pleomorphism","Large cherry-red nucleolus, with *minimal* pleomorphism (monotonous)","Absent nucleoli + angular nuclei"],
+   e:"Prostate cancer nuclei are relatively monotonous and recognized by a **prominent nucleolus** + loss of basal layer + straight luminal borders. ① and ④ point benign (radiation/seminal vesicle are TOO pleomorphic); ② marked pleomorphism argues against prostate cancer."}},
+{s:"s1",a:3,
+ ko:{q:"드물지만 '있으면 암'으로 거의 진단적인 세 소견에 *해당하지 않는* 것은?",
+   o:["Perineural invasion (신경집 안의 악성 gland)","Mucinous fibroplasia (lumen 속 유리질 mucin 소용돌이)","Glomeruloid forms (lumen 속 사구체 모양 혹)","Corpora amylacea (동심원 결석)"],
+   e:"①②③이 거의 특이적인 '있으면 암' 세 징후. ④corpora amylacea는 *양성* gland의 분비 증거(농축 분비물의 동심원 결석)로, 오히려 양성 단서다."},
+ en:{q:"Which is NOT one of the three uncommon-but-near-diagnostic 'if present, it's cancer' features?",
+   o:["Perineural invasion (malignant glands inside the nerve sheath)","Mucinous fibroplasia (hyalinized mucin whorls in the lumen)","Glomeruloid forms (glomerulus-like tuft in the lumen)","Corpora amylacea (laminated concretions)"],
+   e:"①②③ are the three nearly specific 'it's cancer' signs. ④ corpora amylacea are evidence of *benign* secretory function (concentrically laminated condensed secretions) — a benign clue."}},
+{s:"s1",a:0,
+ ko:{q:"'Straight / sharp luminal border'가 암의 단서인 이유로 옳은 것은?",
+   o:["양성 gland의 papillary infolding(주름)이 사라져 lumen 경계가 곧고 또렷해짐","lumen이 사슴뿔처럼 각짐","경계가 뾰족한 가시 모양","mucin이 lumen을 채움"],
+   e:"양성은 정상 접힘건축으로 구불구불·frilly한데, 암은 새로 증식한 단순 gland라 주름이 없어 **곧고 또렷한(sharp) 경계**가 된다('뾰족'이 아니라 '깔끔·직선'). ②staghorn은 atrophy(양성) 단서, ③·④는 무관."},
+ en:{q:"Why is a 'straight/sharp luminal border' a clue to cancer?",
+   o:["Benign papillary infoldings are lost, so the luminal contour becomes straight and crisp","The lumen is angular like a staghorn","The border is spiky/pointed","Mucin fills the lumen"],
+   e:"Benign glands keep papillary infoldings (frilly, undulating); cancer is newly formed simple glands that lose the folds → **straight, crisp** border ('sharp' = clean/straight, not pointed). ② staghorn = atrophy (benign); ③/④ unrelated."}},
+
+// ===== BLOCK 2 =====
+{s:"s2",a:1,
+ ko:{q:"Gleason 등급은 무엇을 기준으로 매기며, cytology(핵 형태)는 왜 점수에 안 들어가나?",
+   o:["Cytology 기준 — 핵 다형성이 등급을 결정","Architecture 기준 — 전립선암 핵은 비교적 단조로워 등급에 영향 안 줌","Mitosis 수 기준","침범 깊이 기준"],
+   e:"Gleason은 **architecture(gland 형성 정도)**로 매긴다. 전립선암은 핵 형태(cytology)가 대체로 monotonous라 등급 변별에 쓰기 어렵다 → 그래서 architecture만. ③mitosis·④침범깊이는 Gleason 기준이 아님."},
+ en:{q:"Gleason grade is based on what, and why is cytology (nuclear morphology) not used?",
+   o:["Cytology — nuclear pleomorphism sets the grade","Architecture — prostate cancer nuclei are fairly monotonous, so they don't affect grade","Mitotic count","Depth of invasion"],
+   e:"Gleason is based on **architecture (degree of gland formation)**. Prostate cancer cytology is fairly monotonous, so it can't discriminate grade → architecture only. ③ mitoses and ④ depth are not Gleason criteria."}},
+{s:"s2",a:0,
+ ko:{q:"Gleason 패턴 설명으로 옳은 짝은?",
+   o:["패턴 3 = 각 gland 주위에 원을 그릴 수 있는 개별·잘 형성된 gland","패턴 3 = solid sheet of cells","패턴 4 = 개별 gland 하나하나 뚜렷","패턴 5 = cribriform glands만"],
+   e:"패턴3=개별 well-formed gland('원 그릴 수 있음'), 패턴4=fused/ill-defined·cribriform·poorly formed lumen, 패턴5=gland 분화 0(solid sheet·cords). ②③④는 패턴이 뒤바뀐 오답."},
+ en:{q:"Which Gleason pattern description is correctly matched?",
+   o:["Pattern 3 = discrete, well-formed glands you can 'draw a circle' around","Pattern 3 = a solid sheet of cells","Pattern 4 = each gland crisply individual","Pattern 5 = only cribriform glands"],
+   e:"Pattern 3 = discrete well-formed glands ('circle each one'), pattern 4 = fused/ill-defined, cribriform, poorly formed lumens, pattern 5 = no glandular differentiation (solid sheets/cords). ②③④ have the patterns swapped."}},
+{s:"s2",a:2,
+ ko:{q:"한 종양이 mostly pattern 3 + a bit of 4 + tiny 5. **Biopsy**에서의 Gleason score는?",
+   o:["3 + 4 = 7","4 + 5 = 9","3 + 5 = 8 (가장 흔한 패턴 + 가장 높은 패턴)","3 + 3 = 6"],
+   e:"Biopsy 규칙 = **가장 흔한 패턴 + 가장 *높은* 패턴**(작은 focus라도 고등급을 놓치면 치명적 → 보수적). 그래서 3 + 5 = 8. (같은 종양이 radical이면 3 + 4 = 7, tertiary 5.)"},
+ en:{q:"A tumor is mostly pattern 3 + a bit of 4 + a tiny bit of 5. On a **biopsy**, the Gleason score is?",
+   o:["3 + 4 = 7","4 + 5 = 9","3 + 5 = 8 (most common + highest pattern)","3 + 3 = 6"],
+   e:"Biopsy rule = **most common + the *highest* pattern** (a small high-grade focus must not be missed → conservative). So 3 + 5 = 8. (Same tumor on a radical = 3 + 4 = 7 with tertiary 5.)"}},
+{s:"s2",a:1,
+ ko:{q:"동일 종양(mostly 3 + bit 4 + tiny 5)을 **Radical prostatectomy**에서 매기면?",
+   o:["3 + 5 = 8","3 + 4 = 7, tertiary pattern 5","4 + 3 = 7","5 + 3 = 8"],
+   e:"Radical 규칙 = **1·2번째로 흔한 패턴**, 소수의 더 높은 등급은 **tertiary**로 별도 기록. 전체를 다 보니 실제 비율대로 매겨도 정보 손실이 없다 → 3 + 4 = 7, tertiary 5."},
+ en:{q:"The same tumor (mostly 3 + bit 4 + tiny 5) graded on a **radical prostatectomy** is?",
+   o:["3 + 5 = 8","3 + 4 = 7 with tertiary pattern 5","4 + 3 = 7","5 + 3 = 8"],
+   e:"Radical rule = **1st + 2nd most prevalent patterns**, with a minor higher-grade component recorded as **tertiary**. The whole gland is seen, so true proportions can be used → 3 + 4 = 7, tertiary 5."}},
+{s:"s2",a:2,
+ ko:{q:"Grade Group 체계가 도입된 이유로 옳은 것은?",
+   o:["Gleason 패턴을 5개에서 3개로 줄이려고","Cytology를 점수에 넣으려고","score 6이 '중간'처럼 보여 환자가 오해 + 3+4와 4+3을 분리하려고","mitosis를 반영하려고"],
+   e:"Grade Group(1~5): ①진단 최저점이 6이라 환자가 '절반쯤 나쁜가' 오해 → 1=최선으로 직관화, ②같은 7이라도 3+4(Group2) vs 4+3(Group3)은 예후가 달라 분리. 패턴 인식 필요성은 그대로다."},
+ en:{q:"Why was the Grade Group system introduced?",
+   o:["To cut Gleason patterns from 5 to 3","To add cytology to the score","Score 6 looks 'mid-scale' and misleads patients + to separate 3+4 from 4+3","To incorporate mitoses"],
+   e:"Grade Groups (1–5): ① the lowest diagnosed score is 6, which misleads patients ('halfway to worst') → make '1 = best' intuitive; ② a 7 is not one thing — 3+4 (Group 2) vs 4+3 (Group 3) differ in prognosis. The need to recognize patterns is unchanged."}},
+
+// ===== BLOCK 3 =====
+{s:"s3",a:3,
+ ko:{q:"High-grade PIN에서 암과 결정적으로 다른 점은?",
+   o:["Nucleolus가 20×에서 보임","핵이 커지고 hyperchromatic","gland가 darker/blue로 보임","basal cell layer가 (patchy하더라도) *남아 있음*"],
+   e:"①②③은 PIN과 암이 *공유*하는 무서운 소견이라 변별 못함. 결정타는 **basal층 존재** — PIN은 상피내(intra-epithelial)라 basal층이 남고, 침윤암은 basal층이 *완전 소실*."},
+ en:{q:"What decisively separates high-grade PIN from cancer?",
+   o:["Nucleoli visible at 20×","Enlarged, hyperchromatic nuclei","Glands appear darker/blue","The basal cell layer is *still present* (even if patchy)"],
+   e:"①②③ are scary features PIN *shares* with cancer, so they don't discriminate. The decider is **a retained basal layer** — PIN is intra-epithelial (basal layer kept); invasive cancer *loses* the basal layer entirely."}},
+{s:"s3",a:1,
+ ko:{q:"고립된 high-grade PIN이 (DCIS·HSIL과 달리) 즉시 rebiopsy/절제를 부르지 않는 이유로 옳은 것은?",
+   o:["PIN은 양성이라 암 위험과 무관","PIN은 그 자체가 악성이 아니라 *위험 표지자*(유방 ALH 격) — 12-core 시대엔 즉시 rebiopsy 이득이 적어 추적관찰","PIN은 항상 저절로 사라짐","PIN은 절제하면 암이 된다"],
+   e:"DCIS/HSIL은 상피내 *악성*이라 즉시 치료. PIN은 '암 동반 위험↑' 신호일 뿐(ALH와 유사). 넓게(12-core) 샘플링한 상태의 고립 HGPIN은 즉시 rebiopsy 이득이 음성 biopsy와 비슷 → 추적관찰. ①위험은 있음, ③·④틀림."},
+ en:{q:"Why does isolated high-grade PIN (unlike DCIS/HSIL) NOT prompt immediate rebiopsy/excision?",
+   o:["PIN is benign and carries no cancer risk","PIN is not itself malignant — it's a *risk marker* (like breast ALH); in the 12-core era immediate rebiopsy yields little, so follow-up","PIN always regresses on its own","Excising PIN turns it into cancer"],
+   e:"DCIS/HSIL are intra-epithelial *malignancy* → treat now. PIN signals higher risk of coexisting cancer (like ALH). With extended (12-core) sampling, isolated HGPIN has a rebiopsy yield similar to a negative biopsy → follow-up. ① there IS elevated risk; ③/④ false."}},
+{s:"s4",a:2,
+ ko:{q:"Mimicker 구별 단서 — 짝이 옳은 것은?",
+   o:["Atrophy = 황금색 lipofuscin 색소","Sclerosing adenosis = 세포질 풍부한 큰 nucleolus","Seminal vesicle = 황금색 lipofuscin 색소가 결정타","Radiation change = stroma 반응(desmoplasia)"],
+   e:"Seminal vesicle은 핵이 무섭게 다형성이지만 **황금색 lipofuscin 덩어리**로 잡는다. ①lipofuscin은 atrophy가 아니라 seminal vesicle, ②sclerosing adenosis는 *세포성 stroma*가 단서, ④전립선암/방사선 모두 desmoplasia로 안 잡는다."},
+ en:{q:"Mimicker distinguishing clue — which pairing is correct?",
+   o:["Atrophy = golden lipofuscin pigment","Sclerosing adenosis = abundant cytoplasm with large nucleoli","Seminal vesicle = golden lipofuscin globs are the giveaway","Radiation change = desmoplastic stromal reaction"],
+   e:"Seminal vesicle has alarmingly pleomorphic nuclei but is identified by **golden lipofuscin globs**. ① lipofuscin = seminal vesicle, not atrophy; ② sclerosing adenosis is recognized by its *cellular stroma*; ④ desmoplasia is not the clue for either."}},
+{s:"s4",a:0,
+ ko:{q:"Radiation atypia가 암이 *아니라고* 가리키는 소견 조합은?",
+   o:["핵이 *너무* 다형성 + smudgy(뭉개진) 진한 chromatin + nucleolus 없음","단조로운 핵 + 크고 빨간 nucleolus","basal층 소실 + 직선 경계","cribriform + 융합 gland"],
+   e:"전립선암은 단조+nucleolus가 특징. 방사선 변화는 **과도한 다형성 + smudgy chromatin + nucleolus 부재**라 오히려 암을 *반박*한다(반직관적!). ②는 암 소견, ③·④도 암 쪽."},
+ en:{q:"Which combination argues that an atypical focus is radiation change, NOT cancer?",
+   o:["*Too* pleomorphic nuclei + smudgy dense chromatin + absent nucleoli","Monotonous nuclei + large red nucleolus","Loss of basal layer + straight borders","Cribriform + fused glands"],
+   e:"Prostate cancer = monotonous nuclei with nucleoli. Radiation change shows **excess pleomorphism + smudgy chromatin + no nucleoli**, which paradoxically argues AGAINST cancer. ② is a cancer feature; ③/④ also favor cancer."}},
+{s:"s5",a:1,
+ ko:{q:"PIN4(IHC triple) — 악성 gland에서 세 항체는 각각 어떻게 염색되나?",
+   o:["p63·HMWCK 양성 / racemase 음성","p63·HMWCK *소실* / racemase(AMACR) *양성*","셋 다 양성","셋 다 음성"],
+   e:"p63(핵)·HMWCK(세포질)=basal marker라 암에선 **소실**, racemase(AMACR)=암 marker라 **양성**. 정반대 신호 두 개가 같이 맞아야 확신. ①은 양성 gland 패턴이다."},
+ en:{q:"PIN4 (IHC triple) — how do the three antibodies stain in a malignant gland?",
+   o:["p63·HMWCK positive / racemase negative","p63·HMWCK *lost* / racemase (AMACR) *positive*","All three positive","All three negative"],
+   e:"p63 (nuclear) and HMWCK (cytoplasmic) are basal markers → **lost** in cancer; racemase (AMACR) is a cancer marker → **positive**. Two opposite signals must agree for confidence. ① is the benign-gland pattern."}},
+{s:"s5",a:2,
+ ko:{q:"PIN4/IHC 결과를 H&E 없이 *단독으로* 믿으면 안 되는 이유로 옳은 것은?",
+   o:["면역염색은 전립선에선 작동 안 함","항체가 너무 비싸서","basal marker는 양성 gland도 patchy해 위양성, racemase는 PIN·adenosis에도 켜지고(비특이) 일부 암은 음성","racemase는 basal세포를 염색해서"],
+   e:"세 항체 모두 새는 구멍: basal층은 양성에서도 patchy→어떤 평면선 안 잡혀 위양성, racemase는 HGPIN·adenosis·nephrogenic adenoma에도 양성(비특이)+일부 암 음성(위음성). 그래서 **H&E 형태 맥락 위에서만** 해석."},
+ en:{q:"Why should PIN4/IHC results NOT be trusted *alone* without H&E?",
+   o:["Immunostains don't work in the prostate","The antibodies are too expensive","Basal markers are patchy in benign glands (false +), and racemase is non-specific (PIN/adenosis +) with some cancers negative","Racemase stains basal cells"],
+   e:"All three antibodies leak: basal layer is patchy even in benign glands (a plane may miss it → false 'cancer'); racemase is positive in HGPIN/adenosis/nephrogenic adenoma (non-specific) and negative in some cancers. So interpret only **in the context of the H&E**."}},
+
+// ===== BLOCK 4 =====
+{s:"s6",a:2,
+ ko:{q:"Radical에서 bladder neck margin이 'urethral margin'이 아니라 *soft tissue margin*으로 평가되는 이유는?",
+   o:["방광경부에 요도가 없어서","평가가 더 빨라서","수술 시 urethra가 prostate 안으로 후퇴(retract)해 슬라이드에 안 보일 수 있어서","항상 양성이라서"],
+   e:"수술 때 요도가 전립선 안쪽으로 쏙 후퇴해 단면에 요도가 안 보일 수 있다 → 그래서 요도 단면이 아니라 **연부조직 단면**으로 본다. (apex는 요도와 평행한 perpendicular margin, vas는 shave.)"},
+ en:{q:"In a radical, why is the bladder neck assessed as a *soft tissue* margin, not a 'urethral' margin?",
+   o:["There is no urethra at the bladder neck","It's faster to evaluate","At surgery the urethra retracts into the prostate and may not be seen on the slide","It's always positive"],
+   e:"The urethra retracts back into the prostate at surgery and may not appear on the section → so it's read as a **soft tissue** margin, not a urethral one. (Apex = perpendicular margins parallel to urethra; vas = shaves.)"}},
+{s:"s6",a:1,
+ ko:{q:"Verumontanum(정구)의 병리적 쓸모는?",
+   o:["Gleason 등급을 정함","앞쪽(anterior)을 가리키는 방향 잡기(orientation) 랜드마크","margin 양성 여부 결정","SV 침범 정의"],
+   e:"Verumontanum은 전립선 요도 뒤벽의 둔덕(사정관이 열림)으로, **앞쪽을 가리켜** quadrant 절편의 앞/뒤를 잡는 데 쓴다. ①·③·④와 무관."},
+ en:{q:"What is the verumontanum used for in grossing?",
+   o:["Setting the Gleason grade","An orientation landmark — it points anteriorly","Deciding margin positivity","Defining SV invasion"],
+   e:"The verumontanum is a bump on the posterior prostatic urethra (ejaculatory ducts open here); it **points anteriorly**, helping orient anterior vs posterior on quadrant sections. Unrelated to ①/③/④."}},
+{s:"s6",a:2,
+ ko:{q:"EPE를 '지방 속 암이 보일 때까지' 기다리면 일부를 놓치는 이유 + 더 나은 인식법은?",
+   o:["지방이 너무 많아 보기 어려워서 / 고배율로 본다","암이 지방을 만들어내서 / mitosis를 센다","advancing front의 섬유화 반응이 지방을 지워버려서 / 저배율로 가장자리 *윤곽*을 따라 종양 *bulge*를 찾는다","지방이 staging과 무관해서 / 무시한다"],
+   e:"암이 밖으로 나갈 때 섬유화 반응이 그 지방을 메워 없애 '지방 속 암' 그림이 안 보일 수 있다 → 지방만 기다리면 EPE 놓침. 대신 **저배율에서 경계 윤곽을 따라 종양이 불룩 나온(bulge) 곳**을 찾는다. (앞쪽은 경계 불분명해 특히 어려움.)"},
+ en:{q:"Why does waiting for 'tumor in fat' miss some EPE, and what works better?",
+   o:["Too much fat to see / use high power","Cancer makes fat / count mitoses","Fibrosis at the advancing front wipes out the fat / at low power follow the contour and look for a tumor *bulge*","Fat is irrelevant to staging / ignore it"],
+   e:"As cancer extends out, a fibrotic response erases the fat, so the clean 'tumor-in-fat' picture may be absent → waiting for fat misses EPE. Instead, **at low power follow the prostate's contour and look for a tumor bulge** beyond the edge. (Anterior is hardest — ill-defined border.)"}},
+{s:"s6",a:1,
+ ko:{q:"Positive margin의 문턱(threshold)으로 옳은 것은?",
+   o:["종양 gland가 잉크에 '아주 가까우면' positive","종양 gland가 잉크에 *실제로 닿아 가로질러 잘린(transected)* 경우만 positive","잉크에서 1mm 이내면 positive","EPE가 있으면 자동 positive"],
+   e:"문턱이 매우 높다 — '가깝다'는 negative, **잉크가 종양 gland를 transect(가로질러 절단)해야** positive. ③거리 기준 아님, ④EPE와 margin은 독립 축이다."},
+ en:{q:"What is the threshold for a positive margin?",
+   o:["Tumor gland 'very close' to ink = positive","Positive only if a tumor gland is *actually transected by (touching) the ink*","Within 1 mm of ink = positive","EPE present → automatically positive"],
+   e:"The threshold is very high — 'close' is negative; the **ink must transect (cut across) a tumor gland** for positive. ③ not a distance rule; ④ EPE and margin are independent axes."}},
+{s:"s6",a:0,
+ ko:{q:"Positive margin일 때 'EPE 부위냐 IPI 부위냐'를 명시하는 이유는? (IPI = intraprostatic incision)",
+   o:["EPE 양성은 진짜 전립선 밖 침범을 자른 것, IPI 양성은 외과의가 전립선을 잘못 잘라 조직을 남긴 술기 문제 — 예후·의미가 달라서","둘이 같은 말이라 형식상","IPI가 더 좋은 예후라 무조건 IPI로 적어서","margin 색을 정하려고"],
+   e:"같은 positive라도 **EPE 부위**=암이 밖으로 나간 걸 절단(진행된 병), **IPI 부위**=외과의가 전립선 안을 잘라 organ-confined일 수 있는 조직을 남긴 *술기* 문제 → 의미가 달라 명시. 앞쪽은 경계 불분명해 거의 EPE로 본다."},
+ en:{q:"Why state whether a positive margin is in an area of EPE vs IPI? (IPI = intraprostatic incision)",
+   o:["An EPE-positive margin cuts true extraprostatic tumor; an IPI-positive margin means the surgeon cut into the prostate and left tissue behind — different meaning/prognosis","They're the same, just formality","IPI has better prognosis so always label IPI","To choose the ink color"],
+   e:"Same 'positive' but different meaning: **EPE area** = true extension was transected (advanced disease); **IPI area** = surgeon cut into the gland and left potentially organ-confined tissue (a *technique* issue). Anterior positives are almost always called EPE (border is ill-defined)."}},
+{s:"s6",a:1,
+ ko:{q:"Seminal vesicle invasion을 현미경에서 '진짜 침범'으로 인정하려면?",
+   o:["종양이 SV *옆에* 붙어 있으면 충분","종양이 SV의 *실질(parenchyma/근육벽) 안*에 있어야 함","SV 표면에 잉크가 닿으면","SV에 lipofuscin이 있으면"],
+   e:"SV가 prostate와 만나는 지점을 떠서, **벽(parenchyma) *안*에 종양**이 있어야 침범(pT3b 급). ①옆에 인접만으론 불충분, ③·④는 침범 정의와 무관."},
+ en:{q:"What is required to call true seminal vesicle invasion microscopically?",
+   o:["Tumor *next to* the SV is enough","Tumor must be *within the parenchyma (muscular wall)* of the SV","Ink touching the SV surface","Lipofuscin present in the SV"],
+   e:"Sample where the SV meets the prostate; invasion requires **tumor *within* the wall (parenchyma)**, not merely adjacent. ① adjacency is insufficient; ③/④ are unrelated to the definition."}}
+];
+
+let lang=(navigator.language||"ko").toLowerCase().startsWith("ko")?"ko":"en";
+const answered={};
+const el=id=>document.getElementById(id);
+
+function render(){
+  const ui=UI[lang];
+  document.documentElement.lang=lang;
+  el("title").textContent=ui.title;
+  el("meta").textContent=ui.meta;
+  el("resetBtn").textContent=ui.reset;
+  el("revealBtn").textContent=ui.reveal;
+  el("langBtn").textContent=ui.lang;
+  el("foot").textContent=ui.foot;
+  const quiz=el("quiz");quiz.innerHTML='';
+  let lastSec=null;
+  Q.forEach((item,qi)=>{
+    if(item.s!==lastSec){const h=document.createElement('div');h.className='theme';h.textContent=SEC[item.s][lang]||SEC[item.s].en;quiz.appendChild(h);lastSec=item.s;}
+    const L=item[lang];
+    const card=document.createElement('div');card.className='q';
+    card.innerHTML='<div class="qtxt">'+(qi+1)+'. '+L.q+'</div>';
+    L.o.forEach((opt,oi)=>{
+      const btn=document.createElement('button');btn.className='opt';btn.textContent=opt;
+      btn.onclick=()=>choose(qi,oi,card);
+      card.appendChild(btn);
+    });
+    const exp=document.createElement('div');exp.className='exp';exp.innerHTML='<b>'+ui.exp+'</b> '+L.e;
+    card.appendChild(exp);
+    if(qi in answered) markCard(card,qi);
+    quiz.appendChild(card);
+  });
+  updateScore();
+}
+function markCard(card,qi){
+  const item=Q[qi];const opts=card.querySelectorAll('.opt');
+  opts.forEach((b,i)=>{b.disabled=true;if(i===item.a)b.classList.add('correct');if(i===answered[qi].pick&&answered[qi].pick!==item.a)b.classList.add('wrong');});
+  card.querySelector('.exp').classList.add('show');
+}
+function choose(qi,oi,card){
+  if(qi in answered) return;
+  answered[qi]={pick:oi,correct:oi===Q[qi].a};
+  markCard(card,qi);
+  updateScore();
+}
+function updateScore(){
+  const tot=Q.length, done=Object.keys(answered).length, correct=Object.values(answered).filter(x=>x.correct).length;
+  el("score").innerHTML=UI[lang].score(done,tot,correct);
+}
+el("resetBtn").onclick=()=>{for(const k in answered)delete answered[k];render();};
+el("revealBtn").onclick=()=>{
+  document.querySelectorAll('#quiz .q').forEach((card,qi)=>{
+    if(!(qi in answered))answered[qi]={pick:Q[qi].a,correct:true};
+    markCard(card,qi);
+  });
+  updateScore();
+};
+el("langBtn").onclick=()=>{lang=lang==="ko"?"en":"ko";render();};
+render();
+</script>
+</body>
+</html>
