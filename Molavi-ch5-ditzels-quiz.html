@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molavi Ch.5 — Ditzels</title>
+<meta name="description" content="Bilingual (KR/EN) quiz on Molavi Ch.5: ditzels — small benign specimens, what they are, and what to rule out (e.g., appendix).">
+<style>
+  :root{--bg:#0f1115;--card:#171a21;--line:#2a2f3a;--txt:#e6e8ec;--sub:#9aa3b2;--accent:#4f8cff;--good:#1f7a4d;--goodbg:#11321f;--bad:#9b2c2c;--badbg:#341515;--chip:#222733;}
+  @media (prefers-color-scheme: light){:root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ea;--txt:#1c2128;--sub:#5b6472;--accent:#2563eb;--good:#147a45;--goodbg:#e7f6ee;--bad:#b91c1c;--badbg:#fdeaea;--chip:#eef1f5;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo",Segoe UI,Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:800px;margin:0 auto;padding:20px 16px 80px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0 0 4px}.meta{color:var(--sub);font-size:13px;margin-bottom:8px}
+  .home{color:var(--accent);text-decoration:none;font-size:13px}
+  .score{position:sticky;top:0;background:var(--bg);padding:10px 0;color:var(--sub);font-size:13px;z-index:4;border-bottom:1px solid var(--line)}.score b{color:var(--txt)}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 6px;margin-bottom:14px}
+  .qtxt{font-weight:600;margin-bottom:12px}
+  .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:transparent;color:var(--txt);padding:11px 13px;border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:.12s}
+  .opt:hover{border-color:var(--accent)}.opt.correct{background:var(--goodbg);border-color:var(--good)}.opt.wrong{background:var(--badbg);border-color:var(--bad)}.opt:disabled{cursor:default}
+  .exp{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);margin-top:4px;padding:10px 0;display:none}.exp.show{display:block}.exp b{color:var(--txt)}
+  .controls{display:flex;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--chip);color:var(--txt);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13px}.btn.lang{border-color:var(--accent);color:var(--accent);font-weight:700}
+  .foot{color:var(--sub);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><h1 id="title"></h1><div class="meta" id="meta"></div><a class="home" href="index.html">← Hub</a></div><button class="btn lang" id="langBtn"></button></div>
+  <div class="score" id="score"></div>
+  <div class="controls"><button class="btn" id="resetBtn"></button><button class="btn" id="revealBtn"></button></div>
+  <div id="quiz"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<script>
+const UI={
+ ko:{title:"Molavi Ch.5 — Ditzels",meta:"Ditzel = 악성 의심·병력 없는 작은 검체. 정의 + rule out. 답을 누르면 즉시 채점+해설.",reset:"다시 풀기",reveal:"정답 모두 보기",lang:"English",exp:"해설:",score:(d,t,c)=>`푼 문제 <b>${d}/${t}</b> · 정답 <b>${c}</b>`,foot:"학습용 — Molavi, The Practice of Surgical Pathology (Ch.5). 진단 표현은 기관·attending 관례 우선."},
+ en:{title:"Molavi Ch.5 — Ditzels",meta:"Ditzels = small benign specimens. Definition + what to rule out. Tap for instant scoring + explanation.",reset:"Reset",reveal:"Reveal all answers",lang:"한국어",exp:"Explanation:",score:(d,t,c)=>`answered <b>${d}/${t}</b> · correct <b>${c}</b>`,foot:"Educational — Molavi, The Practice of Surgical Pathology (Ch.5). Defer wording to your institution/attendings."}
+};
+const Q=[
+{a:1,
+ ko:{q:"이 책에서 'ditzel'은 무엇을 가리키나?",o:["악성 의심이 큰 대형 절제검체","악성 의심·병력이 없는 작은 검체(보통 감별 ~3개)","자가면역 질환 전용 용어","육안 평가가 불가능한 검체"],
+   e:"Ditzel=악성 의심/병력 없는 작은 검체, 보통 진단 후보 ~3개, 청구도 낮음. 익숙해지기 전엔 '정상인가 병변인가'로 시간을 잡아먹는다."},
+ en:{q:"What is a 'ditzel' in this book?",o:["A large resection with high suspicion of malignancy","A small specimen with no suspicion/history of malignancy (often ~3 possible diagnoses)","A term only for autoimmune disease","A specimen that cannot be grossed"],
+   e:"A ditzel = a small specimen with no suspicion/history of malignancy, usually ~3 possible diagnoses and lower billing. They eat time early on ('normal vs pathologic?')."}},
+{a:0,
+ ko:{q:"충수(appendix) ditzel에서 꼭 'rule out'해야 하는 것은?",o:["끝(tip)의 carcinoid + 벽 안의 점액(mucinous neoplasm)","흑색종","림프종","신경초종"],
+   e:"충수: tip의 carcinoid와 벽 내 mucin pool(mucinous neoplasm)을 놓치면 안 됨. 정상=림프소포 풍부한 대장점막, 의미 있는 건 호중구(transmural=충수염)."},
+ en:{q:"In an appendix ditzel, what must you 'rule out'?",o:["Carcinoid in the tip + mucin in the wall (mucinous neoplasm)","Melanoma","Lymphoma","Schwannoma"],
+   e:"Appendix: don't miss a tip carcinoid or wall mucin pools (mucinous neoplasm). Normal = colonic mucosa with abundant lymphoid follicles; neutrophils matter (transmural = appendicitis)."}}
+];
+let lang=(navigator.language||"ko").toLowerCase().startsWith("ko")?"ko":"en";const answered={};const el=id=>document.getElementById(id);
+function render(){const ui=UI[lang];document.documentElement.lang=lang;el("title").textContent=ui.title;el("meta").textContent=ui.meta;el("resetBtn").textContent=ui.reset;el("revealBtn").textContent=ui.reveal;el("langBtn").textContent=ui.lang;el("foot").textContent=ui.foot;const quiz=el("quiz");quiz.innerHTML='';Q.forEach((item,qi)=>{const L=item[lang];const card=document.createElement('div');card.className='q';card.innerHTML='<div class="qtxt">'+(qi+1)+'. '+L.q+'</div>';L.o.forEach((opt,oi)=>{const btn=document.createElement('button');btn.className='opt';btn.textContent=opt;btn.onclick=()=>choose(qi,oi,card);card.appendChild(btn);});const exp=document.createElement('div');exp.className='exp';exp.innerHTML='<b>'+ui.exp+'</b> '+L.e;card.appendChild(exp);if(qi in answered)markCard(card,qi);quiz.appendChild(card);});updateScore();}
+function markCard(card,qi){const item=Q[qi];const opts=card.querySelectorAll('.opt');opts.forEach((b,i)=>{b.disabled=true;if(i===item.a)b.classList.add('correct');if(i===answered[qi].pick&&answered[qi].pick!==item.a)b.classList.add('wrong');});card.querySelector('.exp').classList.add('show');}
+function choose(qi,oi,card){if(qi in answered)return;answered[qi]={pick:oi,correct:oi===Q[qi].a};markCard(card,qi);updateScore();}
+function updateScore(){const tot=Q.length,done=Object.keys(answered).length,correct=Object.values(answered).filter(x=>x.correct).length;el("score").innerHTML=UI[lang].score(done,tot,correct);}
+el("resetBtn").onclick=()=>{for(const k in answered)delete answered[k];render();};
+el("revealBtn").onclick=()=>{document.querySelectorAll('#quiz .q').forEach((card,qi)=>{if(!(qi in answered))answered[qi]={pick:Q[qi].a,correct:true};markCard(card,qi);});updateScore();};
+el("langBtn").onclick=()=>{lang=lang==="ko"?"en":"ko";render();};render();
+</script>
+</body>
+</html>

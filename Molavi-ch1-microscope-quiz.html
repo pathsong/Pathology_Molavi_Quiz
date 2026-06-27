@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molavi Ch.1 — Using the Microscope</title>
+<meta name="description" content="Bilingual (KR/EN) study + quiz on Molavi Ch.1: microscope parts (Figure 1.1, parts 1–12) and their roles, ergonomics, Köhler/parfocality.">
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --line:#2a2f3a; --txt:#e6e8ec; --sub:#9aa3b2;
+    --accent:#4f8cff; --good:#1f7a4d; --goodbg:#11321f; --bad:#9b2c2c; --badbg:#341515; --chip:#222733; --hdr:#202635;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --txt:#1c2128; --sub:#5b6472;
+      --accent:#2563eb; --good:#147a45; --goodbg:#e7f6ee; --bad:#b91c1c; --badbg:#fdeaea; --chip:#eef1f5; --hdr:#eaeefb; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo",Segoe UI,Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:800px;margin:0 auto;padding:20px 16px 80px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:16px;margin:22px 0 8px}
+  .meta{color:var(--sub);font-size:13px;margin-bottom:8px}
+  .home{color:var(--accent);text-decoration:none;font-size:13px}
+  .score{position:sticky;top:0;background:var(--bg);padding:10px 0;color:var(--sub);font-size:13px;z-index:4;border-bottom:1px solid var(--line)}
+  .score b{color:var(--txt)}
+  .ref{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 4px;margin:6px 0 4px;overflow:hidden}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--sub);font-weight:700}
+  td.num{font-weight:800;color:var(--accent);width:34px;text-align:center}
+  td.name{font-weight:650;white-space:nowrap}
+  .theme{background:var(--hdr);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin:18px 0 12px;font-weight:700;font-size:14px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 6px;margin-bottom:14px}
+  .qtxt{font-weight:600;margin-bottom:12px}
+  .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:transparent;color:var(--txt);
+    padding:11px 13px;border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:.12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.correct{background:var(--goodbg);border-color:var(--good)}
+  .opt.wrong{background:var(--badbg);border-color:var(--bad)}
+  .opt:disabled{cursor:default}
+  .exp{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);margin-top:4px;padding:10px 0;display:none}
+  .exp.show{display:block}
+  .exp b{color:var(--txt)}
+  .controls{display:flex;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--chip);color:var(--txt);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13px}
+  .btn.lang{border-color:var(--accent);color:var(--accent);font-weight:700}
+  .foot{color:var(--sub);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 id="title"></h1>
+      <div class="meta" id="meta"></div>
+      <a class="home" href="index.html">← Hub</a>
+    </div>
+    <button class="btn lang" id="langBtn"></button>
+  </div>
+
+  <h2 id="refTitle"></h2>
+  <div class="meta" id="refNote"></div>
+  <div class="ref"><table><thead><tr>
+    <th>#</th><th id="thName"></th><th id="thRole"></th></tr></thead>
+    <tbody id="refBody"></tbody></table></div>
+
+  <h2 id="quizTitle"></h2>
+  <div class="score" id="score"></div>
+  <div class="controls">
+    <button class="btn" id="resetBtn"></button>
+    <button class="btn" id="revealBtn"></button>
+  </div>
+  <div id="quiz"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const UI={
+  ko:{title:"Molavi Ch.1 — Using the Microscope (현미경)",
+    meta:"현미경 부위(Figure 1.1, 1–12) + 역할 학습 + 퀴즈(부위·ergonomics·Köhler/parfocal).",
+    refTitle:"📖 현미경 부위 (Figure 1.1)", refNote:"책의 사진을 옆에 두고 번호와 맞춰 보세요. 헷갈리는 둘: #2 field=빛의 '폭/원', #10 aperture=빛의 '원뿔/대비'.",
+    thName:"부위", thRole:"역할",
+    quizTitle:"📝 퀴즈",
+    reset:"다시 풀기", reveal:"정답 모두 보기", lang:"English", exp:"해설:",
+    score:(d,t,c)=>`푼 문제 <b>${d}/${t}</b> · 정답 <b>${c}</b>`,
+    foot:"학습용 — Molavi, The Practice of Surgical Pathology (Ch.1). PGY-1 첫날용."},
+  en:{title:"Molavi Ch.1 — Using the Microscope",
+    meta:"Microscope parts (Figure 1.1, 1–12) + roles, then a quiz (parts · ergonomics · Köhler/parfocal).",
+    refTitle:"📖 Parts of the Microscope (Figure 1.1)", refNote:"Keep the book photo beside you and match the numbers. Two easy to confuse: #2 field = width/circle of light; #10 aperture = cone/contrast.",
+    thName:"Part", thRole:"Role",
+    quizTitle:"📝 Quiz",
+    reset:"Reset", reveal:"Reveal all answers", lang:"한국어", exp:"Explanation:",
+    score:(d,t,c)=>`answered <b>${d}/${t}</b> · correct <b>${c}</b>`,
+    foot:"Educational — Molavi, The Practice of Surgical Pathology (Ch.1). A light intro for day one."}
+};
+
+const PARTS=[
+ {n:1, ko:["광원 (Light source)","바닥 전구의 빛을 거울이 위로 반사."], en:["Light source","Bulb at the back; a mirror directs light upward."]},
+ {n:2, ko:["Field diaphragm (시야 조리개)","슬라이드로 가는 빛 '기둥의 폭'을 조절. 닫으면 빛 원이 작아짐. Köhler 세팅 시작점."], en:["Field diaphragm","Controls the width of the column of light toward the slide; closing shrinks the circle. Start of Köhler setup."]},
+ {n:3, ko:["Condenser 중심 나사","양옆 2개 — substage condenser를 중앙 정렬."], en:["Condenser centering screws","One on each side — center the substage condenser."]},
+ {n:4, ko:["Focus knobs (초점)","coarse(거침)·fine(미세) 초점."], en:["Focus knobs","Coarse and fine focus."]},
+ {n:5, ko:["Condenser 높이 손잡이","condenser를 올리고 내려 빛 초점 → Köhler illumination."], en:["Condenser height knob","Raises/lowers condenser to focus light → Köhler illumination."]},
+ {n:6, ko:["Flip knob","최저배율(2×)에서 condenser를 빛 경로 밖으로 젖힘."], en:["Condenser flip knob","Flips condenser out of the light path for lowest power (2×)."]},
+ {n:7, ko:["Eyepieces (접안렌즈) + diopter ring","눈으로 보는 곳. diopter 링으로 좌우 눈 시력차 보정."], en:["Eyepieces + diopter ring","Where you look; diopter ring corrects each eye's focus."]},
+ {n:8, ko:["Objectives (대물렌즈)","배율별 렌즈 (4×·10×·40× 등)."], en:["Objectives","The magnifying lenses (4×, 10×, 40×, …)."]},
+ {n:9, ko:["Stage (스테이지)","슬라이드 놓는 판. slide holder 빼면 자유 이동."], en:["Stage","Holds the slide; removing the holder allows free movement."]},
+ {n:10, ko:["Aperture diaphragm (개구 조리개)","substage condenser의 조리개. 표본에 닿는 빛 '원뿔 크기' → 대비·화질."], en:["Aperture diaphragm","On the substage condenser; sizes the cone of light → contrast & quality."]},
+ {n:11, ko:["Stage 이동 손잡이","slide holder 끼웠을 때 X·Y축 이동."], en:["Stage movement knobs","X/Y movement when the slide holder is in place."]},
+ {n:12, ko:["Light intensity (광량)","전압=밝기 조절 손잡이/슬라이더."], en:["Light intensity","Voltage/brightness knob or sliding bar."]},
+];
+
+const Q=[
+{a:1,
+ ko:{q:"#2 Field diaphragm(시야 조리개)의 역할은?",
+   o:["접안렌즈 시력 보정","슬라이드로 향하는 빛 '기둥의 폭(빛의 원)'을 조절 — Köhler 세팅의 시작","배율 선택","표본 X·Y 이동"],
+   e:"Field diaphragm = 빛 기둥의 폭(보이는 빛 원의 크기). 닫으면 작은 원/팔각형이 보이고, 그걸 중앙·초점 맞추는 게 Köhler 시작. ①diopter(#7), ③objective(#8), ④stage knob(#11)."},
+ en:{q:"What does the #2 field diaphragm do?",
+   o:["Corrects eyepiece focus","Controls the width of the light column (the circle of light) — the start of Köhler","Selects magnification","Moves the specimen in X/Y"],
+   e:"Field diaphragm = width of the light column (size of the visible circle). Closing it shows a small circle/octagon you center & focus to begin Köhler. ① diopter (#7), ③ objective (#8), ④ stage knob (#11)."}},
+{a:2,
+ ko:{q:"#10 Aperture diaphragm(개구 조리개, substage condenser)을 조절하면 주로 무엇이 바뀌나?",
+   o:["배율","슬라이드 좌우 위치","표본에 닿는 빛 '원뿔의 크기' → 대비(contrast)·화질","접안렌즈 거리"],
+   e:"Aperture diaphragm = 빛 원뿔 크기 → 대비·입체감·화질. 닫으면 어둡고 입체적, 열면 평평·밝음. #2 field(빛의 폭)와 헷갈리지 말 것. ①objective, ②stage, ④IPD."},
+ en:{q:"Adjusting the #10 aperture diaphragm (substage condenser) mainly changes what?",
+   o:["Magnification","Left–right slide position","The size of the cone of light → contrast & image quality","Eyepiece distance"],
+   e:"Aperture diaphragm = size of the light cone → contrast/3-D quality. Closing dims & adds depth; opening flattens & brightens. Don't confuse with #2 field (width of light). ① objective, ② stage, ④ IPD."}},
+{a:0,
+ ko:{q:"#7은 무엇이며 diopter ring은 왜 있나?",
+   o:["Eyepieces(접안렌즈) — diopter ring으로 좌우 눈 시력차를 보정","Objectives — 배율 변경","Condenser — 빛 초점","Field diaphragm — 빛 폭"],
+   e:"#7 = 접안렌즈. 한 눈은 일반 초점, 다른 눈은 diopter 링으로 맞춰 양안 초점 일치(특히 parfocal·multihead에서 중요). ②#8, ③#5, ④#2."},
+ en:{q:"What is #7, and why the diopter ring?",
+   o:["Eyepieces — the diopter ring corrects the difference between your two eyes","Objectives — change magnification","Condenser — focus light","Field diaphragm — width of light"],
+   e:"#7 = eyepieces. Focus one eye normally, the other via the diopter ring so both eyes match (key for parfocality & multihead). ② #8, ③ #5, ④ #2."}},
+{a:3,
+ ko:{q:"#5(condenser 높이 손잡이)의 목적은?",
+   o:["coarse 초점","표본 이동","배율 변경","condenser를 올리고 내려 빛을 초점화 → Köhler illumination"],
+   e:"#5 = condenser 높이 조절 → 빛 초점(Köhler). field diaphragm 가장자리가 칼같이 맞을 때까지 올리고 내린다. ①#4, ②#11, ③#8."},
+ en:{q:"Purpose of #5 (condenser height knob)?",
+   o:["Coarse focus","Move the specimen","Change magnification","Raise/lower the condenser to focus light → Köhler illumination"],
+   e:"#5 = condenser height → focuses the light (Köhler). Raise/lower until the field-diaphragm edge is crisp. ① #4, ② #11, ③ #8."}},
+{a:2,
+ ko:{q:"#6 Flip knob은 언제 쓰나?",
+   o:["고배율 유침","사진 찍을 때","최저배율(2×)에서 condenser를 빛 경로 밖으로 젖힐 때 (굴절성 물질 'pop' 트릭에도)","slide 고정"],
+   e:"#6 = condenser를 빛 경로 밖으로 flip — 최저배율(2×)에서, 또 calcium oxalate·봉합사 같은 굴절성 물질을 튀어나오게 보는 트릭에도 쓴다. ①·②·④ 무관."},
+ en:{q:"When do you use the #6 flip knob?",
+   o:["High-power oil immersion","When taking photos","To flip the condenser out of the light path at lowest power (2×) — also the 'pop' trick for refractile material","To clamp the slide"],
+   e:"#6 = flips the condenser out of the light path — for the lowest power (2×) and as the trick to make refractile material (calcium oxalate, suture) pop out. ①/②/④ unrelated."}},
+{a:1,
+ ko:{q:"현미경 ergonomics에서 '양쪽 팔꿈치를 책상에 받쳐라'가 강조되는 이유는?",
+   o:["빛을 더 모으려고","팔꿈치가 떠 있으면 미세 조작 시 parascapular(견갑주위) 근경련이 생겨서","슬라이드를 빨리 넘기려고","눈의 피로를 줄이려고"],
+   e:"두 손(조작+초점)을 종일 쓰는데 팔꿈치가 떠 있으면 견갑주위 근경련. 의자를 높여 전완을 책상에 평평히. ergonomics=반복동작 손상 예방."},
+ en:{q:"Why does ergonomics stress supporting BOTH elbows on the desk?",
+   o:["To gather more light","Floating elbows during fine movements cause a parascapular back spasm","To move slides faster","To reduce eye strain"],
+   e:"Two-handed work all day; unsupported elbows → parascapular spasm. Raise the chair so forearms lie flat. Ergonomics = preventing repetitive-motion injury."}},
+{a:2,
+ ko:{q:"'Parfocal(파포컬)'의 의미는?",
+   o:["빛이 표본에 고르게 퍼진 상태","conjugate plane 정렬(=Köhler)","40×에서 맞춘 초점이 4×로 바꿔도 유지되는 것","편광으로 결정이 빛나는 것"],
+   e:"Parfocality = 한 배율에서 초점을 맞추면 다른 배율로 바꿔도 초점 유지(특히 multihead 중요). ②는 Köhler(별개), ①도 Köhler 쪽, ④는 polarization."},
+ en:{q:"What does 'parfocal' mean?",
+   o:["Light evenly spread on the specimen","Conjugate planes aligned (= Köhler)","Focus set at 40× stays in focus when you switch to 4×","Crystals glowing under polarized light"],
+   e:"Parfocality = focus at one power stays in focus at another (key on multihead). ② is Köhler (separate), ① also Köhler, ④ is polarization."}},
+{a:0,
+ ko:{q:"편광판 없이 calcium oxalate·봉합사 같은 굴절성 물질을 '튀어나오게' 보려면?",
+   o:["condenser를 빛 경로 밖으로 flip(#6)","field diaphragm을 끝까지 연다","oil immersion","eyepiece를 뺀다"],
+   e:"염색 안 되는 투명 물질은 condenser를 빛 경로에서 빼면 'pop out'. ②는 평평·밝게, ③고배율 유침, ④aperture 맞출 때."},
+ en:{q:"Without a polarizer, how do you make refractile material (calcium oxalate, suture) pop out?",
+   o:["Flip the condenser out of the light path (#6)","Open the field diaphragm fully","Use oil immersion","Remove an eyepiece"],
+   e:"Flip the condenser out of the light path and the translucent material pops out. ② flattens/brightens, ③ high-power oil, ④ for setting the aperture."}}
+];
+
+let lang=(navigator.language||"ko").toLowerCase().startsWith("ko")?"ko":"en";
+const answered={};
+const el=id=>document.getElementById(id);
+
+function renderRef(){
+  const ui=UI[lang];
+  el("refTitle").textContent=ui.refTitle;
+  el("refNote").textContent=ui.refNote;
+  el("thName").textContent=ui.thName;
+  el("thRole").textContent=ui.thRole;
+  const body=el("refBody");body.innerHTML='';
+  PARTS.forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td class="num">'+p.n+'</td><td class="name">'+p[lang][0]+'</td><td>'+p[lang][1]+'</td>';
+    body.appendChild(tr);
+  });
+}
+function render(){
+  const ui=UI[lang];
+  document.documentElement.lang=lang;
+  el("title").textContent=ui.title;
+  el("meta").textContent=ui.meta;
+  el("quizTitle").textContent=ui.quizTitle;
+  el("resetBtn").textContent=ui.reset;
+  el("revealBtn").textContent=ui.reveal;
+  el("langBtn").textContent=ui.lang;
+  el("foot").textContent=ui.foot;
+  renderRef();
+  const quiz=el("quiz");quiz.innerHTML='';
+  Q.forEach((item,qi)=>{
+    const L=item[lang];
+    const card=document.createElement('div');card.className='q';
+    card.innerHTML='<div class="qtxt">'+(qi+1)+'. '+L.q+'</div>';
+    L.o.forEach((opt,oi)=>{
+      const btn=document.createElement('button');btn.className='opt';btn.textContent=opt;
+      btn.onclick=()=>choose(qi,oi,card);
+      card.appendChild(btn);
+    });
+    const exp=document.createElement('div');exp.className='exp';exp.innerHTML='<b>'+ui.exp+'</b> '+L.e;
+    card.appendChild(exp);
+    if(qi in answered) markCard(card,qi);
+    quiz.appendChild(card);
+  });
+  updateScore();
+}
+function markCard(card,qi){
+  const item=Q[qi];const opts=card.querySelectorAll('.opt');
+  opts.forEach((b,i)=>{b.disabled=true;if(i===item.a)b.classList.add('correct');if(i===answered[qi].pick&&answered[qi].pick!==item.a)b.classList.add('wrong');});
+  card.querySelector('.exp').classList.add('show');
+}
+function choose(qi,oi,card){
+  if(qi in answered) return;
+  answered[qi]={pick:oi,correct:oi===Q[qi].a};
+  markCard(card,qi);
+  updateScore();
+}
+function updateScore(){
+  const tot=Q.length, done=Object.keys(answered).length, correct=Object.values(answered).filter(x=>x.correct).length;
+  el("score").innerHTML=UI[lang].score(done,tot,correct);
+}
+el("resetBtn").onclick=()=>{for(const k in answered)delete answered[k];render();};
+el("revealBtn").onclick=()=>{
+  document.querySelectorAll('#quiz .q').forEach((card,qi)=>{
+    if(!(qi in answered))answered[qi]={pick:Q[qi].a,correct:true};
+    markCard(card,qi);
+  });
+  updateScore();
+};
+el("langBtn").onclick=()=>{lang=lang==="ko"?"en":"ko";render();};
+render();
+</script>
+</body>
+</html>
