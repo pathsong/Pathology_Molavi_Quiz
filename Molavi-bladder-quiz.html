@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molavi Bladder Quiz — 방광 현미경 진단</title>
+<meta name="description" content="Bilingual (KR/EN) quiz on Molavi Ch.12 Bladder — normal/variants, cystitis, flat (CIS) vs papillary pathway, grading, invasion & depth (detrusor), and mimics of invasion.">
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --line:#2a2f3a; --txt:#e6e8ec; --sub:#9aa3b2;
+    --accent:#4f8cff; --good:#1f7a4d; --goodbg:#11321f; --bad:#9b2c2c; --badbg:#341515; --chip:#222733; --hdr:#202635;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --txt:#1c2128; --sub:#5b6472;
+      --accent:#2563eb; --good:#147a45; --goodbg:#e7f6ee; --bad:#b91c1c; --badbg:#fdeaea; --chip:#eef1f5; --hdr:#eaeefb; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo",Segoe UI,Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:800px;margin:0 auto;padding:20px 16px 80px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0 0 4px}
+  .meta{color:var(--sub);font-size:13px;margin-bottom:8px}
+  .home{color:var(--accent);text-decoration:none;font-size:13px}
+  .score{position:sticky;top:0;background:var(--bg);padding:10px 0;color:var(--sub);font-size:13px;z-index:4;border-bottom:1px solid var(--line)}
+  .score b{color:var(--txt)}
+  .theme{background:var(--hdr);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin:18px 0 12px;font-weight:700;font-size:14px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 6px;margin-bottom:14px}
+  .qtxt{font-weight:600;margin-bottom:12px}
+  .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:transparent;color:var(--txt);
+    padding:11px 13px;border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:.12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.correct{background:var(--goodbg);border-color:var(--good)}
+  .opt.wrong{background:var(--badbg);border-color:var(--bad)}
+  .opt:disabled{cursor:default}
+  .exp{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);margin-top:4px;padding:10px 0;display:none}
+  .exp.show{display:block}
+  .exp b{color:var(--txt)}
+  .controls{display:flex;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--chip);color:var(--txt);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13px}
+  .btn.lang{border-color:var(--accent);color:var(--accent);font-weight:700}
+  .foot{color:var(--sub);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 id="title"></h1>
+      <div class="meta" id="meta"></div>
+      <a class="home" href="index.html">← Hub</a>
+    </div>
+    <button class="btn lang" id="langBtn"></button>
+  </div>
+
+  <div class="score" id="score"></div>
+  <div class="controls">
+    <button class="btn" id="resetBtn"></button>
+    <button class="btn" id="revealBtn"></button>
+  </div>
+  <div id="quiz"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const UI={
+  ko:{title:"Molavi 방광 퀴즈 — 현미경 진단",
+    meta:"섹션 = Molavi Ch.12 소제목: Normal·Variants / Cystitis / Flat(CIS) / Papillary / Invasion·Depth / Mimics. 답을 누르면 즉시 채점 + 해설(정답 이유 + 오답이 왜 틀렸는지).",
+    reset:"다시 풀기", reveal:"정답 모두 보기", lang:"English", exp:"해설:",
+    score:(d,t,c)=>`푼 문제 <b>${d}/${t}</b> · 정답 <b>${c}</b>`,
+    foot:"학습용 — Molavi, The Practice of Surgical Pathology (Ch.12 Bladder). 등급·병기 최종은 기관 프로토콜·attending 확인."},
+  en:{title:"Molavi Bladder Quiz — Microscopic Diagnosis",
+    meta:"Sections = Molavi Ch.12 subheadings: Normal·Variants / Cystitis / Flat (CIS) / Papillary / Invasion·Depth / Mimics. Tap an answer for instant scoring + explanation (why right + why each distractor is wrong).",
+    reset:"Reset", reveal:"Reveal all answers", lang:"한국어", exp:"Explanation:",
+    score:(d,t,c)=>`answered <b>${d}/${t}</b> · correct <b>${c}</b>`,
+    foot:"Educational — Molavi, The Practice of Surgical Pathology (Ch.12 Bladder). Defer final grade/stage to your institution & attendings."}
+};
+const SEC={
+ s1:{ko:"Normal Urothelium & Normal Variants · 정상·변이",en:"Normal Urothelium & Normal Variants"},
+ s2:{ko:"Inflammation (Cystitis) · 염증",en:"Inflammation (Cystitis)"},
+ s3:{ko:"Flat Pathway — Carcinoma in Situ · 평평형(CIS)",en:"Flat Pathway — Carcinoma in Situ"},
+ s4:{ko:"Papillary Pathway · 유두형",en:"Papillary Pathway"},
+ s5:{ko:"Invasion & Depth (Detrusor) · 침윤·침범깊이",en:"Invasion & Depth (Detrusor)"},
+ s6:{ko:"Mimics of Invasion · 침윤 모방 병변",en:"Mimics of Invasion"}
+};
+
+const Q=[
+// ── s1 Normal & Variants ──
+{s:"s1",a:2,
+ ko:{q:"정상 urothelium 평가에서 표면의 umbrella cell은 어떻게 다루나?",
+   o:["가장 신뢰할 핵으로 본다","CIS 진단의 기준 세포다","비정형 핵이 있을 수 있어 dysplasia 평가 시 *무시*한다","항상 악성 신호다"],
+   e:"Umbrella cell = 표면의 크고 pillowy한 세포로 *원래* 비정형 핵을 가질 수 있어 → dysplasia 평가 때 무시. 정상 urothelium은 5–7층, 핵은 표면에 수직 배열, 림프구의 2–3배."},
+ en:{q:"How are surface umbrella cells handled when assessing urothelium?",
+   o:["Treated as the most reliable nuclei","They define CIS","They can have atypical nuclei and should be *ignored* when assessing for dysplasia","Always a sign of malignancy"],
+   e:"Umbrella cells = large pillowy surface cells that *normally* may have atypical nuclei → ignore them for dysplasia. Normal urothelium is 5–7 cells thick, nuclei perpendicular to the surface, ~2–3× a lymphocyte."}},
+{s:"s1",a:1,
+ ko:{q:"Von Brunn's nest가 침윤암처럼 보일 수 있는데, *양성*임을 가리키는 단서는?",
+   o:["Ragged tongue 모양 경계","Bland 핵 + 매끈하고 둥근 경계","핵이 림프구의 5배","detrusor 침범"],
+   e:"Von Brunn = urothelium이 lamina propria로 함입 → 침윤 착시. 양성 단서 = bland 핵 + 둥글고 매끈한 경계. ①ragged/tongue·③큰 악성핵·④detrusor 침범은 오히려 *암* 쪽. (단, CIS가 nest로 자라들면 침윤 흉내.)"},
+ en:{q:"Von Brunn's nests can mimic invasion — which feature indicates they are *benign*?",
+   o:["Ragged, tongue-like borders","Bland nuclei + smooth, rounded border","Nuclei 5× a lymphocyte","Detrusor invasion"],
+   e:"Von Brunn = urothelium invaginating into the lamina propria → mimics invasion. Benign clues = bland nuclei + smooth rounded border. ① ragged/tongue, ③ large malignant nuclei, ④ detrusor invasion all point to cancer instead. (But CIS can grow into nests and mimic invasion.)"}},
+{s:"s1",a:0,
+ ko:{q:"Von Brunn's nest가 진화한 변이의 짝으로 옳은 것은?",
+   o:["Cystitis cystica = 중심 lumen 확장 / Cystitis glandularis = columnar(선) 화생","Cystitis cystica = 편평 화생 / glandularis = 괴사","둘 다 악성","둘 다 detrusor 병변"],
+   e:"Von Brunn nest → 중심 lumen 생기면 cystitis cystica, columnar(장형) 화생이 더해지면 cystitis glandularis. 모두 *양성*. 학습목표의 '양성 urothelial 병변'."},
+ en:{q:"Which correctly pairs the evolved von Brunn variants?",
+   o:["Cystitis cystica = dilated central lumen / Cystitis glandularis = columnar (glandular) metaplasia","Cystica = squamous metaplasia / glandularis = necrosis","Both malignant","Both detrusor lesions"],
+   e:"Von Brunn nest → a central lumen = cystitis cystica; added columnar (intestinal) metaplasia = cystitis glandularis. Both *benign* — the 'benign urothelial lesions' of the objectives."}},
+
+{s:"s1",a:1,
+ ko:{q:"정상 urothelial 핵의 크기 기준점은? (이 '림프구 자(ruler)'가 CIS 진단에 다시 쓰임)",
+   o:["림프구와 같은 크기","림프구의 약 2–3배","림프구의 4–5배","적혈구의 10배"],
+   e:"정상 urothelial 핵 ≈ 림프구 2–3배. 이 자(ruler)로 CIS를 잰다 — CIS의 가장 나쁜 핵은 4–5배. 크기 비교가 진단의 출발점."},
+ en:{q:"The size reference for normal urothelial nuclei? (this 'lymphocyte ruler' returns for CIS)",
+   o:["Same size as a lymphocyte","About 2–3× a lymphocyte","4–5× a lymphocyte","10× an RBC"],
+   e:"A normal urothelial nucleus ≈ 2–3× a lymphocyte. Use this ruler for CIS — its worst nuclei are 4–5×. Size comparison is the starting point."}},
+
+// ── s2 Cystitis ──
+{s:"s2",a:1,
+ ko:{q:"오늘날 granulomatous cystitis의 가장 흔한 원인과, 육아종이 생기는 의미는?",
+   o:["세균뇨 — 육아종은 부작용","BCG 방광내 면역치료 — 육아종은 type IV 반응으로 *치료가 작동한다는 증거*","결석 — 육아종은 이물반응","간질성 방광염 — 육아종은 진단 기준"],
+   e:"BCG = 약독화 live mycobacterium, 표재성 urothelial Ca에 방광내 주입. 강한 T세포 매개(type IV) 육아종 반응이 암도 같이 제거 → 부작용이 아니라 치료 증거. 옛 원인은 결핵."},
+ en:{q:"Today's most common cause of granulomatous cystitis, and what the granulomas signify?",
+   o:["Bacteriuria — granulomas are a side effect","Intravesical BCG immunotherapy — granulomas are a type IV response = *evidence the therapy is working*","Calculi — foreign-body reaction","Interstitial cystitis — granulomas are diagnostic"],
+   e:"BCG = attenuated live mycobacterium instilled for superficial urothelial Ca. The strong T-cell (type IV) granulomatous response also clears tumor → evidence it works, not a side effect. The older cause was TB."}},
+{s:"s2",a:2,
+ ko:{q:"Malakoplakia의 Michaelis–Gutmann body가 '과녁(bull's-eye)'처럼 보이는 이유와 근본 원인은?",
+   o:["바이러스 봉입체 / 원인 불명","지방 축적 / 알레르기","미분해 세균 잔해 core + 칼슘·철 *동심원* 침착 / 대식세포 *살균 결함*","악성 핵분열 / 종양"],
+   e:"Malakoplakia = 대식세포가 세균(주로 E.coli)을 다 못 죽임 → 미분해 잔해에 칼슘·철이 동심원으로 쌓인 M–G body가 과녁 모양. iron(Prussian blue)·calcium(von Kossa)·PAS 양성."},
+ en:{q:"Why does the Michaelis–Gutmann body of malakoplakia look like a bull's-eye, and what's the root cause?",
+   o:["Viral inclusion / unknown cause","Lipid accumulation / allergy","Undigested bacterial core + *concentric* calcium/iron deposition / defective macrophage *bactericidal* function","Malignant mitosis / neoplasm"],
+   e:"Malakoplakia = macrophages can't fully kill bacteria (often E. coli) → calcium/iron layer concentrically around undigested debris = the bull's-eye M–G body. Positive on iron (Prussian blue), calcium (von Kossa), PAS."}},
+
+// ── s3 Flat / CIS ──
+{s:"s3",a:2,
+ ko:{q:"Flat CIS의 핵 소견으로 옳은 것은?",
+   o:["림프구의 2–3배, 매끈한 윤곽","정상과 같음","림프구의 4–5배, hyperchromatic·boulder(거친) 윤곽","핵 없음"],
+   e:"정상 urothelial 핵은 림프구 2–3배인데, CIS의 가장 나쁜 핵은 4–5배 + hyperchromatic + boulder(울퉁불퉁) 윤곽. 이 '림프구 자(ruler)'가 핵심."},
+ en:{q:"Which describes the nuclei of flat CIS?",
+   o:["2–3× a lymphocyte, smooth contour","Same as normal","4–5× a lymphocyte, hyperchromatic with boulder-like (jagged) outlines","No nuclei"],
+   e:"Normal urothelial nuclei are 2–3× a lymphocyte; the worst CIS nuclei are 4–5× + hyperchromatic + boulder-like outlines. The 'lymphocyte ruler' is the key."}},
+{s:"s3",a:1,
+ ko:{q:"Flat CIS 진단에 full-thickness(전층) 침범이 *반드시* 필요한가? 왜?",
+   o:["반드시 필요 — 전층이어야 CIS","필요 없음 — 세포가 압도적으로 악성 + CIS urothelium은 결합이 약해 잘 벗겨져(denuded), 흩어진 악성세포 몇 개로도 진단","필요 없음 — 항상 reactive로 본다","detrusor 침범이 있어야 진단"],
+   e:"CIS는 세포 자체가 명백히 악성(4–5배·boulder)이고, urothelium이 poorly cohesive해 denuded되기 쉬워 — clinging 악성세포 몇 개만 있어도 CIS. 그래서 denuded 영역을 고배율로 꼼꼼히."},
+ en:{q:"Is full-thickness involvement *required* to diagnose flat CIS? Why?",
+   o:["Required — must be full-thickness","Not required — cells are overtly malignant + CIS urothelium is poorly cohesive (denuded), so even a few scattered malignant cells suffice","Not required — always call it reactive","Needs detrusor invasion to diagnose"],
+   e:"CIS cells are overtly malignant (4–5×, boulder) and the urothelium is poorly cohesive → often denuded, leaving a few clinging cells. Even those justify CIS. Scrutinize denuded areas at high power."}},
+{s:"s3",a:0,
+ ko:{q:"Reactive urothelial 핵 vs CIS 핵의 구별로 옳은 것은?",
+   o:["Reactive = 커지되 euchromatic·매끈·둥근 윤곽(nucleoli 가능) / CIS = hyperchromatic·boulder","Reactive = hyperchromatic·boulder / CIS = 작고 매끈","둘이 같다","reactive가 항상 detrusor 침범"],
+   e:"Reactive = 자극 반응으로 핵이 커지지만 *고르게 옅고(euchromatic)* 윤곽이 *매끈·둥글다*(nucleoli 두드러질 수 있음). CIS = hyperchromatic·boulder. 염증 심하면 CIS 진단 문턱을 높여라."},
+ en:{q:"Reactive urothelial nuclei vs CIS nuclei — which is correct?",
+   o:["Reactive = enlarged but euchromatic, smooth/round (nucleoli possible) / CIS = hyperchromatic, boulder-like","Reactive = hyperchromatic, boulder / CIS = small, smooth","They are identical","Reactive always invades detrusor"],
+   e:"Reactive = enlarged but evenly pale (euchromatic), smooth round contours (nucleoli may be prominent). CIS = hyperchromatic, boulder-like. Raise your threshold for CIS amid heavy inflammation."}},
+
+{s:"s3",a:0,
+ ko:{q:"방광 flat 병변에서 'mild/severe dysplasia'를 잘 안 쓰는 이유와, 대개 어떤 셋 중 하나로 사인아웃하나?",
+   o:["mild는 urologist가 치료 안 함, severe는 CIS와 같음 → 대개 benign / CIS / reactive 셋","mild가 곧 침윤 → 대개 papilloma","detrusor 침범으로 분류 → 대개 low/high grade","grade group으로 분류 → 대개 PUNLMP"],
+   e:"mild dysplasia = urologist가 치료 안 함, severe = CIS와 동일 → 둘 다 임상적으로 무의미. 진짜 dysplasia(moderate)는 드물게만. 대부분 flat 병변은 benign·CIS·reactive로 사인아웃."},
+ en:{q:"Why is 'mild/severe dysplasia' rarely used for flat bladder lesions, and they're usually signed out as which three?",
+   o:["Mild isn't treated by urologists; severe = CIS → usually benign / CIS / reactive","Mild = invasion → usually papilloma","Classified by detrusor invasion → usually low vs high grade","Classified by grade group → usually PUNLMP"],
+   e:"Mild dysplasia isn't treated; severe = CIS → both clinically unhelpful. True (moderate) dysplasia is uncommon. Most flat lesions are signed out as benign, CIS, or reactive."}},
+
+// ── s4 Papillary ──
+{s:"s4",a:1,
+ ko:{q:"Papillary 병변은 in situ인데 왜 'in situ'라고 부르지 않나?",
+   o:["이미 침윤이라서","'in situ'라 하면 urologist가 flat CIS로 오해 → 대신 noninvasive papillary urothelial carcinoma라 부름","양성이라서","detrusor 침범이라서"],
+   e:"용어 함정: papillary in situ를 'in situ'라 하면 urologist는 flat CIS로 오해. 그래서 noninvasive papillary urothelial carcinoma(low/high grade)라 부르고, 침윤하면 invasive papillary UC(대개 high grade)."},
+ en:{q:"Papillary lesions are in situ — why aren't they called 'in situ'?",
+   o:["They are already invasive","Saying 'in situ' makes urologists think of flat CIS → instead called noninvasive papillary urothelial carcinoma","They are benign","They invade the detrusor"],
+   e:"Terminology trap: calling papillary lesions 'in situ' makes urologists think flat CIS. So they're called noninvasive papillary urothelial carcinoma (low/high grade); once invasive → invasive papillary UC (usually high grade)."}},
+{s:"s4",a:2,
+ ko:{q:"PUNLMP와 low-grade papillary urothelial carcinoma의 *결정적* 차이는?",
+   o:["두께 — PUNLMP가 더 얇다","Fibrovascular core 유무","핵 균일성 — PUNLMP는 모든 핵이 균일, low-grade는 *드문드문 무작위* 비정형(+가끔 mitosis)","detrusor 침범 여부"],
+   e:"PUNLMP = 두꺼워졌지만 모든 핵이 똑같이 균일, mitosis 사실상 없음. Low-grade = *랜덤하게 흩어진* 약간 커지고 진한 핵(불균일) + 가끔 mitosis. 'uniform vs scattered atypia'가 핵심."},
+ en:{q:"The *decisive* difference between PUNLMP and low-grade papillary urothelial carcinoma?",
+   o:["Thickness — PUNLMP is thinner","Presence of a fibrovascular core","Nuclear uniformity — PUNLMP has uniform nuclei; low-grade has *scattered, random* atypia (+ occasional mitoses)","Detrusor invasion"],
+   e:"PUNLMP = thicker but every nucleus uniform, mitoses ~absent. Low-grade = randomly scattered slightly enlarged/darker nuclei (non-uniform) + occasional mitoses. 'Uniform vs scattered atypia' is the key."}},
+{s:"s4",a:1,
+ ko:{q:"Papillary urothelial carcinoma의 '>5% 규칙'은?",
+   o:["5% 미만이면 양성","High-grade 특징이 소량(>5%)만 있어도 종양 *전체*를 high-grade로 분류","5% 침윤이면 cystectomy","Mitosis가 5개 이상이면 high-grade"],
+   e:"소수(>5%)라도 high-grade 성분이 있으면 전체를 high-grade로 — 가장 나쁜 성분이 행동을 결정하니까(전립선 Gleason의 worst-component 논리와 같은 안전제일)."},
+ en:{q:"The '>5% rule' for papillary urothelial carcinoma?",
+   o:["Under 5% means benign","Even a minor (>5%) high-grade component grades the *whole* tumor high-grade","5% invasion → cystectomy","≥5 mitoses → high-grade"],
+   e:"Even a minor (>5%) high-grade component makes the whole tumor high-grade — the worst component drives behavior (same worst-component safety logic as Gleason)."}},
+
+{s:"s4",a:0,
+ ko:{q:"Papilloma의 정의적 특징과 악성화 위험은? (papillary 스펙트럼의 양성 끝)",
+   o:["정상 두께·잘 배열된 정상 urothelium(작은 핵, nuclear groove, mitosis 없음) — 악성화 위험 없음","두꺼워진 무질서 상피 — 고위험","단층 상피 — nephrogenic adenoma","detrusor 침범 — cystectomy"],
+   e:"Papilloma = fibrovascular core를 *정상* urothelium이 덮은 것(정상 두께·배열, 작은 핵, groove, mitosis 없음). 악성화 위험 0. ※papillary hyperplasia(진짜 core 없는 물결 상피)와 혼동 금지."},
+ en:{q:"Defining feature of a papilloma and its malignant potential? (the benign end of the papillary spectrum)",
+   o:["Normal-thickness, well-organized normal urothelium (small nuclei, grooves, no mitoses) — no malignant potential","Thickened, disordered epithelium — high risk","Single-layered epithelium — nephrogenic adenoma","Detrusor invasion — cystectomy"],
+   e:"Papilloma = a fibrovascular core lined by *normal* urothelium (normal thickness/organization, small nuclei, grooves, no mitoses). No malignant potential. Don't confuse with papillary hyperplasia (undulating, no true cores)."}},
+
+// ── s5 Invasion & Depth ──
+{s:"s5",a:2,
+ ko:{q:"'Paradoxical differentiation'이란?",
+   o:["표면 세포가 더 파래지는 것","detrusor 근육의 분화","깊이 침윤한 nest가 *더 분홍(eosinophilic)·성숙*해 보여, 표면보다 더 분화한 듯 보이는 현상","mitosis 증가"],
+   e:"정상 urothelium은 표면으로 갈수록 성숙(umbrella). 침윤암은 반대로 깊은 nest가 더 분홍·성숙해 보임 → '역설'. 더 정상처럼 보이는 깊은 nest가 오히려 *침윤* 단서."},
+ en:{q:"What is 'paradoxical differentiation'?",
+   o:["Surface cells turning bluer","Differentiation of the detrusor muscle","Deep invasive nests look *more pink (eosinophilic)/mature* than the surface — appearing more differentiated as they go deeper","Increased mitoses"],
+   e:"Normal urothelium matures toward the surface (umbrella cells). Invasive carcinoma is the reverse — deep nests look more pink/mature → 'paradox'. Deeper nests that look more 'normal' are actually a clue to invasion."}},
+{s:"s5",a:1,
+ ko:{q:"방광암 리포트에서 detrusor(muscularis propria)에 대해 *반드시* 적어야 할 두 가지는? (왜 운명을 가르나)",
+   o:["색·크기","detrusor가 ① 검체에 present한가 ② involved(침범)됐는가","mitosis 수·grade","margin 색·잉크"],
+   e:"미침범(표재성)=TURBT/topical, detrusor 침범=cystectomy. 그래서 ①present(없으면 침범 배제 못 함→재절제 판단) ②involved를 명시. 검체에 detrusor가 없으면 staging 불완전."},
+ en:{q:"Two things a bladder cancer report *must* state about the detrusor (muscularis propria)? (Why it's pivotal)",
+   o:["Color & size","Whether detrusor is ① present in the specimen ② involved (invaded)","Mitotic count & grade","Margin ink color"],
+   e:"Non-invasive (superficial) → TURBT/topical; detrusor invasion → cystectomy. So state ① present (if absent, invasion can't be excluded → re-resection) and ② involved. No detrusor in the specimen = incomplete staging."}},
+{s:"s5",a:0,
+ ko:{q:"Lamina propria 안의 muscularis mucosae를 detrusor로 오인하면 안 되는 이유와 구별법은?",
+   o:["과진단(overstage)→불필요한 cystectomy 위험. 구별: muscularis mucosae=가늘고 끊긴 wisp / detrusor=두껍고 연속된 slab","둘은 같다","muscularis mucosae가 더 두껍다","구별 불가라 무조건 detrusor로 본다"],
+   e:"가는 wisp(muscularis mucosae)를 detrusor로 오인하면 표재성을 muscle-invasive로 overstage → 불필요한 cystectomy. detrusor는 *크고 두껍고 연속된* 근육 덩어리."},
+ en:{q:"Why must you not mistake muscularis mucosae (in the lamina propria) for detrusor, and how to tell them apart?",
+   o:["Overstaging → risk of unnecessary cystectomy. Tell apart: muscularis mucosae = thin, discontinuous wisps / detrusor = thick, continuous slab","They are the same","Muscularis mucosae is thicker","Indistinguishable — always call it detrusor"],
+   e:"Mistaking thin wisps (muscularis mucosae) for detrusor overstages a superficial tumor as muscle-invasive → unnecessary cystectomy. The detrusor is a big, thick, continuous slab of muscle."}},
+
+// ── s6 Mimics ──
+{s:"s6",a:1,
+ ko:{q:"Nephrogenic adenoma를 urothelial 병변과 가르는 *결정적* 단서는?",
+   o:["다층(stratified) urothelial 핵","*단층(single-layered)* 상피 — urothelium의 다층 핵 배열이 없음 (핵이 진해도 균일·dense, mitosis 없음)","detrusor 침범","boulder 핵"],
+   e:"Nephrogenic adenoma는 다양한 모습(papillary·hobnail·작은 tubule·signet-ring 흉내)이지만, urothelial 병변과 달리 *단층*. '다층 urothelial 핵이 없는 종양 → nephrogenic adenoma'."},
+ en:{q:"The *decisive* clue separating nephrogenic adenoma from a urothelial lesion?",
+   o:["Stratified (multilayered) urothelial nuclei","It is *single-layered* — lacks the stratified urothelial nuclei (nuclei may be dark but are uniform/dense, no mitoses)","Detrusor invasion","Boulder nuclei"],
+   e:"Nephrogenic adenoma takes many forms (papillary, hobnail, small tubules, signet-ring mimic) but unlike urothelial lesions it is *single-layered*. 'A tumor lacking stratified urothelial nuclei → think nephrogenic adenoma.'"}},
+{s:"s6",a:2,
+ ko:{q:"Von Brunn's nest(양성)와 nested TCC(악성)는 둘 다 작고 bland한 nest다 — 무엇으로 가르나?",
+   o:["세포의 핵 비정형(nested TCC가 더 악성핵)","Umbrella cell 유무","세포가 아니라 *배열·경계* — nested TCC는 바닥이 *침윤성*이고 nest가 빽빽·복잡","mitosis 색"],
+   e:"둘 다 세포는 bland — 갈리는 건 architecture. Nested TCC = base가 infiltrative + 작은 nest가 빽빽·architecturally complex. Von Brunn = 둥글고 고르게, 제자리. '세포 말고 배열·경계로 판단'."},
+ en:{q:"Von Brunn's nest (benign) and nested TCC (malignant) both show small, bland nests — what separates them?",
+   o:["Nuclear atypia (nested TCC has more malignant nuclei)","Presence of umbrella cells","Not cytology but *architecture/border* — nested TCC has an *infiltrative base* with crowded, complex nests","Mitosis color"],
+   e:"Both are cytologically bland — architecture decides. Nested TCC = infiltrative base + crowded, architecturally complex small nests. Von Brunn = rounded, even, in place. Judge by architecture/border, not cytology."}},
+{s:"s6",a:0,
+ ko:{q:"림프구가 가득한 배경에 암세포가 묻혀 잘 안 보이고, cytokeratin 염색이 결정적인 방광 악성은?",
+   o:["Lymphoepithelial-like carcinoma","Von Brunn's nest","Nephrogenic adenoma","Papilloma"],
+   e:"Lymphoepithelial-like carcinoma = 림프구 바다 + 조직 파괴로 염증처럼 보이고 암세포(크고 bubbly, syncytial)가 배경에 묻힘 → cytokeratin으로 드러냄. ②③④는 양성."},
+ en:{q:"Which bladder malignancy hides carcinoma cells in a sea of lymphocytes, with cytokeratin being the giveaway?",
+   o:["Lymphoepithelial-like carcinoma","Von Brunn's nest","Nephrogenic adenoma","Papilloma"],
+   e:"Lymphoepithelial-like carcinoma = a lymphocyte-rich, destructive background mimicking inflammation; the carcinoma cells (large, bubbly, syncytial) fade in → revealed by cytokeratin. ②③④ are benign."}},
+{s:"s6",a:0,
+ ko:{q:"Inverted papilloma가 침윤처럼 보이지만 *양성*인 이유는?",
+   o:["papilloma가 위가 아니라 *아래·안으로* 자라 stroma에 묻히지만 기저막을 넘지 않고 urothelium이 양성으로 보임","detrusor를 침범하지만 grade가 낮아서","단층이라서","림프구에 묻혀서"],
+   e:"Inverted papilloma = papilloma가 'inside-out'으로 아래로 자라 stroma에 묻힘 — 하지만 기저막 안 넘고, urothelium이 von Brunn처럼 *양성*으로 보임. 코의 Schneiderian papilloma와 같은 결."},
+ en:{q:"Why does an inverted papilloma look invasive but is *benign*?",
+   o:["A papilloma grows *down/in* (inside-out), buried in stroma, but does NOT cross the basement membrane, and the urothelium looks benign","It invades the detrusor but is low grade","Because it is single-layered","Because it is buried in lymphocytes"],
+   e:"Inverted papilloma = a papilloma growing inside-out, buried in stroma — but it doesn't cross the basement membrane and the urothelium looks benign (like von Brunn). Analogous to the Schneiderian papilloma of the nose."}}
+];
+
+let lang=(navigator.language||"ko").toLowerCase().startsWith("ko")?"ko":"en";
+const answered={};
+const el=id=>document.getElementById(id);
+
+function render(){
+  const ui=UI[lang];
+  document.documentElement.lang=lang;
+  el("title").textContent=ui.title;
+  el("meta").textContent=ui.meta;
+  el("resetBtn").textContent=ui.reset;
+  el("revealBtn").textContent=ui.reveal;
+  el("langBtn").textContent=ui.lang;
+  el("foot").textContent=ui.foot;
+  const quiz=el("quiz");quiz.innerHTML='';
+  let lastSec=null;
+  Q.forEach((item,qi)=>{
+    if(item.s!==lastSec){const h=document.createElement('div');h.className='theme';h.textContent=SEC[item.s][lang]||SEC[item.s].en;quiz.appendChild(h);lastSec=item.s;}
+    const L=item[lang];
+    const card=document.createElement('div');card.className='q';
+    card.innerHTML='<div class="qtxt">'+(qi+1)+'. '+L.q+'</div>';
+    L.o.forEach((opt,oi)=>{
+      const btn=document.createElement('button');btn.className='opt';btn.textContent=opt;
+      btn.onclick=()=>choose(qi,oi,card);
+      card.appendChild(btn);
+    });
+    const exp=document.createElement('div');exp.className='exp';exp.innerHTML='<b>'+ui.exp+'</b> '+L.e;
+    card.appendChild(exp);
+    if(qi in answered) markCard(card,qi);
+    quiz.appendChild(card);
+  });
+  updateScore();
+}
+function markCard(card,qi){
+  const item=Q[qi];const opts=card.querySelectorAll('.opt');
+  opts.forEach((b,i)=>{b.disabled=true;if(i===item.a)b.classList.add('correct');if(i===answered[qi].pick&&answered[qi].pick!==item.a)b.classList.add('wrong');});
+  card.querySelector('.exp').classList.add('show');
+}
+function choose(qi,oi,card){
+  if(qi in answered) return;
+  answered[qi]={pick:oi,correct:oi===Q[qi].a};
+  markCard(card,qi);
+  updateScore();
+}
+function updateScore(){
+  const tot=Q.length, done=Object.keys(answered).length, correct=Object.values(answered).filter(x=>x.correct).length;
+  el("score").innerHTML=UI[lang].score(done,tot,correct);
+}
+el("resetBtn").onclick=()=>{for(const k in answered)delete answered[k];render();};
+el("revealBtn").onclick=()=>{
+  document.querySelectorAll('#quiz .q').forEach((card,qi)=>{
+    if(!(qi in answered))answered[qi]={pick:Q[qi].a,correct:true};
+    markCard(card,qi);
+  });
+  updateScore();
+};
+el("langBtn").onclick=()=>{lang=lang==="ko"?"en":"ko";render();};
+render();
+</script>
+</body>
+</html>
