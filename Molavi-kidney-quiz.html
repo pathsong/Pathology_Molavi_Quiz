@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molavi Kidney Quiz — 신장 종양 진단</title>
+<meta name="description" content="Bilingual (KR/EN) quiz on Molavi Ch.13 Kidney — gross staging, cystic lesions, clear/pink/blue-cell tumor algorithm, ISUP grade, pediatric/Wilms, and IHC/molecular (PEComa, MiT translocation).">
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --line:#2a2f3a; --txt:#e6e8ec; --sub:#9aa3b2;
+    --accent:#4f8cff; --good:#1f7a4d; --goodbg:#11321f; --bad:#9b2c2c; --badbg:#341515; --chip:#222733; --hdr:#202635;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --txt:#1c2128; --sub:#5b6472;
+      --accent:#2563eb; --good:#147a45; --goodbg:#e7f6ee; --bad:#b91c1c; --badbg:#fdeaea; --chip:#eef1f5; --hdr:#eaeefb; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo",Segoe UI,Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:800px;margin:0 auto;padding:20px 16px 80px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0 0 4px}
+  .meta{color:var(--sub);font-size:13px;margin-bottom:8px}
+  .home{color:var(--accent);text-decoration:none;font-size:13px}
+  .score{position:sticky;top:0;background:var(--bg);padding:10px 0;color:var(--sub);font-size:13px;z-index:4;border-bottom:1px solid var(--line)}
+  .score b{color:var(--txt)}
+  .theme{background:var(--hdr);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin:18px 0 12px;font-weight:700;font-size:14px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 6px;margin-bottom:14px}
+  .qtxt{font-weight:600;margin-bottom:12px}
+  .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:transparent;color:var(--txt);
+    padding:11px 13px;border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:.12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.correct{background:var(--goodbg);border-color:var(--good)}
+  .opt.wrong{background:var(--badbg);border-color:var(--bad)}
+  .opt:disabled{cursor:default}
+  .exp{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);margin-top:4px;padding:10px 0;display:none}
+  .exp.show{display:block}
+  .exp b{color:var(--txt)}
+  .controls{display:flex;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--chip);color:var(--txt);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13px}
+  .btn.lang{border-color:var(--accent);color:var(--accent);font-weight:700}
+  .foot{color:var(--sub);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 id="title"></h1>
+      <div class="meta" id="meta"></div>
+      <a class="home" href="index.html">← Hub</a>
+    </div>
+    <button class="btn lang" id="langBtn"></button>
+  </div>
+
+  <div class="score" id="score"></div>
+  <div class="controls">
+    <button class="btn" id="resetBtn"></button>
+    <button class="btn" id="revealBtn"></button>
+  </div>
+  <div id="quiz"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const UI={
+  ko:{title:"Molavi 신장 퀴즈 — 종양 진단",
+    meta:"섹션 = Molavi Ch.13 소제목: Gross·Staging / Cystic / Clear cells / Pink cells / Blue·Pediatric / IHC·Molecular. 답을 누르면 즉시 채점 + 해설(정답 이유 + 오답이 왜 틀렸는지).",
+    reset:"다시 풀기", reveal:"정답 모두 보기", lang:"English", exp:"해설:",
+    score:(d,t,c)=>`푼 문제 <b>${d}/${t}</b> · 정답 <b>${c}</b>`,
+    foot:"학습용 — Molavi, The Practice of Surgical Pathology (Ch.13 Kidney). 등급·병기 최종은 AJCC 8판·기관 프로토콜·attending 확인."},
+  en:{title:"Molavi Kidney Quiz — Tumor Diagnosis",
+    meta:"Sections = Molavi Ch.13 subheadings: Gross·Staging / Cystic / Clear cells / Pink cells / Blue·Pediatric / IHC·Molecular. Tap an answer for instant scoring + explanation (why right + why each distractor is wrong).",
+    reset:"Reset", reveal:"Reveal all answers", lang:"한국어", exp:"Explanation:",
+    score:(d,t,c)=>`answered <b>${d}/${t}</b> · correct <b>${c}</b>`,
+    foot:"Educational — Molavi, The Practice of Surgical Pathology (Ch.13 Kidney). Defer grade/stage to AJCC 8th, local protocol & attendings."}
+};
+const SEC={
+ s1:{ko:"Gross & Staging · 그로싱·병기",en:"Gross & Staging"},
+ s2:{ko:"Cystic Lesions · 낭성 병변",en:"Cystic Lesions"},
+ s3:{ko:"Tumors with Clear Cells · 투명세포 종양 (+ISUP grade)",en:"Tumors with Clear Cells (+ ISUP grade)"},
+ s4:{ko:"Tumors with Pink Cells · 분홍세포 종양 (+AML)",en:"Tumors with Pink Cells (+ AML)"},
+ s5:{ko:"Blue Cells & Pediatric · 파란세포·소아",en:"Blue Cells & Pediatric"},
+ s6:{ko:"IHC & Molecular · 면역염색·분자",en:"IHC & Molecular"}
+};
+
+const Q=[
+// ── s1 Gross & Staging ──
+{s:"s1",a:3,
+ ko:{q:"신장 종양 그로싱에서 staging에 결정적인 침범 부위가 *아닌* 것은?",
+   o:["Hilum의 renal sinus fat","Capsule을 넘어 perirenal fat","Renal vein (margin·pelvis)","표면의 색이 노란지 갈색인지"],
+   e:"색(노랑/갈색)은 종류를 좁히는 육안 단서일 뿐, *병기*를 정하진 않음. staging 결정 = renal sinus fat·perirenal fat·renal vein 침범 + 부신·Gerota."},
+ en:{q:"Which is NOT a site decisive for staging at grossing of a renal tumor?",
+   o:["Renal sinus fat at the hilum","Beyond the capsule into perirenal fat","Renal vein (margin/pelvis)","Whether the surface is yellow or brown"],
+   e:"Surface color narrows the tumor *type*, not the *stage*. Staging sites = renal sinus fat, perirenal fat, renal vein, plus adrenal and Gerota's fascia."}},
+{s:"s1",a:1,
+ ko:{q:"그로싱 때 renal vein을 *꼭 길게 열어보는* 이유는?",
+   o:["색을 보려고","RCC가 vein 안으로 *보이지 않는* tumor thrombus를 뻗어 — margin·정맥침범(pT3a)을 놓치지 않으려고","무게를 재려고","고정을 잘 하려고"],
+   e:"RCC는 renal vein으로 tumor thrombus를 보내는데 겉에선 안 보임 → 닫힌 채 자르면 놓침. 열어서 ① vein margin ② 정맥 침범(→pT3a) 확인."},
+ en:{q:"Why must you open the renal vein lengthwise at grossing?",
+   o:["To see its color","RCC sends *invisible* tumor thrombus into the vein — don't miss the margin or venous invasion (pT3a)","To weigh it","For better fixation"],
+   e:"RCC sends tumor thrombus into the renal vein that isn't visible externally → missed if left closed. Open it to check ① vein margin ② venous invasion (→ pT3a)."}},
+{s:"s1",a:2,
+ ko:{q:"Gerota's fascia를 뚫는 종양 침범은 몇 기이며 흔한가?",
+   o:["pT1, 매우 흔함","pT3a, 흔함","pT4, 꽤 드묾","pT2, 보통"],
+   e:"Gerota's fascia(perirenal fat을 싸는 얇은 막) 침범 = pT4, 실제로는 꽤 드물다. (renal sinus·perirenal fat·renal vein 침범 = pT3a.)"},
+ en:{q:"Tumor through Gerota's fascia = what stage, and is it common?",
+   o:["pT1, very common","pT3a, common","pT4, fairly uncommon","pT2, moderate"],
+   e:"Invasion through Gerota's fascia (the delicate membrane around perirenal fat) = pT4, and is actually fairly uncommon. (Renal sinus / perirenal fat / renal vein = pT3a.)"}},
+
+// ── s2 Cystic ──
+{s:"s2",a:1,
+ ko:{q:"Simple cyst·(adult) cystic nephroma·multilocular cystic renal neoplasm of LMP를 가르는 *핵심* 질문은?",
+   o:["낭이 몇 개인가","낭벽·격벽에 *clear cell이 있나 없나*","환자 나이","낭의 크기"],
+   e:"신장에서 clear cell = RCC 신호. 격벽·낭벽에 clear cell nest가 있으면 양성 cyst가 아니라 multilocular cystic RCC of LMP. simple cyst·cystic nephroma는 clear cell이 *없어야* 성립."},
+ en:{q:"The *key* question separating simple cyst vs (adult) cystic nephroma vs multilocular cystic renal neoplasm of LMP?",
+   o:["How many cysts","Whether there are *clear cells* in the wall/septa","Patient age","Cyst size"],
+   e:"In the kidney, clear cells signal RCC. Clear-cell nests in the septa/wall = multilocular cystic RCC of LMP, not a benign cyst. Simple cyst & cystic nephroma must have *no* clear cells."}},
+{s:"s2",a:0,
+ ko:{q:"Adult cystic nephroma의 stroma는 무엇을 닮았고 어떤 수용체 양성? (MEST와 같은 결)",
+   o:["Ovarian-type stroma (파랗고 cellular·spindly) — ER·PR 양성","Desmoplastic stroma — keratin 양성","지방 stroma — S100 양성","근육 stroma — HMB-45 양성"],
+   e:"Adult cystic nephroma = bland 상피 + ovarian-type stroma(파랗고 cellular·spindly, ER/PR 양성). MEST와 한 스펙트럼. clear cell은 없어야 함."},
+ en:{q:"Adult cystic nephroma's stroma resembles what, and is positive for which receptors? (spectrum with MEST)",
+   o:["Ovarian-type stroma (blue, cellular, spindly) — ER/PR positive","Desmoplastic stroma — keratin positive","Fatty stroma — S100 positive","Muscle stroma — HMB-45 positive"],
+   e:"Adult cystic nephroma = bland lining + ovarian-type stroma (blue, cellular, spindly, ER/PR positive). Spectrum with MEST. No clear cells."}},
+{s:"s2",a:2,
+ ko:{q:"Multilocular cystic renal neoplasm of LMP에서 clear cell이 잘 안 보일 수 있는 함정과 대응은?",
+   o:["clear cell이 없으면 무조건 악성","항상 한눈에 보임","격벽 상피가 *벗겨져(denuded)* 있을 때가 많아 — 꼼꼼히 sampling·hunting 해야 놓치지 않음","고배율이 필요 없음"],
+   e:"이 종양은 격벽이 denuded되어 clear cell이 안 보일 때가 많아 — 안 보인다고 양성으로 넘기면 놓침. 철저한 sampling이 핵심."},
+ en:{q:"Pitfall when clear cells are hard to find in multilocular cystic renal neoplasm of LMP?",
+   o:["No clear cells means it's always malignant","Always obvious at a glance","The septal lining is often *denuded* — sample & hunt carefully so you don't miss them","No high power needed"],
+   e:"The septa are often denuded of epithelium, so clear cells may be hidden — don't dismiss as benign. Careful sampling is key."}},
+
+// ── s3 Clear cells + ISUP ──
+{s:"s3",a:1,
+ ko:{q:"신장 종양에서 clear cell을 보면? + '3mm clear cell focus도 carcinoma'의 뜻은?",
+   o:["대개 양성 adenoma — 작으면 무시","Renal cell carcinoma를 먼저 — *clear cell adenoma는 없어서* 작은 focus도 carcinoma","항상 부신","항상 oncocytoma"],
+   e:"신장 clear cell = RCC 먼저. 실질적으로 'clear cell adenoma'는 없으므로 3mm focus도 (순한) clear cell carcinoma로 본다."},
+ en:{q:"Clear cells in a renal tumor → and what does '3 mm clear-cell focus is still carcinoma' mean?",
+   o:["Usually benign adenoma — ignore if small","Think renal cell carcinoma first — there is *no clear cell adenoma*, so even a tiny focus is carcinoma","Always adrenal","Always oncocytoma"],
+   e:"Clear cells in the kidney → RCC first. There's effectively no 'clear cell adenoma,' so even a 3 mm focus is (an indolent) clear cell carcinoma."}},
+{s:"s3",a:2,
+ ko:{q:"초보 실수 1번 — clear cell RCC로 오인하기 쉬운 *정상 구조물*과 핵에서의 구별점은?",
+   o:["정상 사구체 — 핵이 둥글다","정상 tubule — 핵이 크다","정상 *부신피질* — 지질 vacuole이 *핵을 눌러 stellate(별·톱니) 윤곽*을 만든다(RCC는 핵이 둥긂)","림프절 — 핵이 작다"],
+   e:"부신피질은 지질 vacuole이 가득해 clear해 보이지만, vacuole이 핵을 indent해 *stellate* 윤곽. RCC는 핵이 둥글고 섬세한 모세혈관 그물이 있음. 부신이 검체에 있는지 항상 확인."},
+ en:{q:"Novice mistake #1 — which *normal* structure mimics clear cell RCC, and the nuclear tell?",
+   o:["Normal glomerulus — round nuclei","Normal tubule — large nuclei","Normal *adrenal cortex* — lipid vacuoles *indent the nucleus → stellate outline* (RCC nuclei stay round)","Lymph node — small nuclei"],
+   e:"Adrenal cortex looks clear (lipid-laden) but its vacuoles indent the nucleus → stellate outline. RCC nuclei stay round and the tumor has a delicate capillary net. Always check whether the adrenal is present."}},
+{s:"s3",a:0,
+ ko:{q:"Clear cell RCC의 가장 특징적인 진단 단서는?",
+   o:["섬세한 모세혈관이 그물처럼 세포를 packet(acinar)으로 나눔 + 투명세포 + desmoplasia 없음","두꺼운 섬유성 desmoplasia","koilocytic 핵 + perinuclear halo","foamy macrophage로 찬 유두"],
+   e:"Clear cell RCC = 'chicken-wire' 모세혈관 그물이 세포를 packet으로 나눔(고등급·전이에서도 유지) + 투명세포 + 섬세한 막 + desmoplasia 없음. ②chromophobe/일반암, ③chromophobe, ④papillary RCC."},
+ en:{q:"The most characteristic diagnostic clue of clear cell RCC?",
+   o:["A delicate capillary net dividing cells into packets (acinar) + clear cells + no desmoplasia","Thick fibrous desmoplasia","Koilocytic nuclei + perinuclear halo","Papillae packed with foamy macrophages"],
+   e:"Clear cell RCC = 'chicken-wire' capillary net dividing cells into packets (kept even in high-grade/mets) + clear cells + delicate membranes + no desmoplasia. ② chromophobe/other ca, ③ chromophobe, ④ papillary RCC."}},
+{s:"s3",a:1,
+ ko:{q:"Clear cell RCC의 ISUP nucleolar grade에서, Grade I과 III를 가르는 핵심은?",
+   o:["세포질 색","10× 대물렌즈에서 *nucleolus가 보이기 시작*하면 Grade III (Grade I·II는 안 보임; I은 림프구 닮은 작은 핵)","종양 크기","mitosis 색"],
+   e:"ISUP @10×: I=림프구 닮은 작은 핵·nucleolus 없음 / II=핵 커지나 nucleolus 안 보임 / III=*10×에서 nucleolus 뚜렷* / IV=anaplastic·비정상 mitosis(또는 sarcomatoid). 분기 = '10×에서 nucleolus 보이나'."},
+ en:{q:"In ISUP nucleolar grading of clear cell RCC, what separates Grade I from Grade III?",
+   o:["Cytoplasm color","Whether *nucleoli become visible at 10×* → Grade III (not seen in I/II; I has small lymphocyte-like nuclei)","Tumor size","Mitosis color"],
+   e:"ISUP @10×: I = small lymphocyte-like nuclei, no nucleoli / II = bigger nuclei, nucleoli not visible / III = *nucleoli clearly visible at 10×* / IV = anaplastic / atypical mitoses (or sarcomatoid). Cut = nucleoli visible at 10×."}},
+{s:"s3",a:2,
+ ko:{q:"Clear cell papillary RCC의 특징적 핵 위치와 임상 성격은?",
+   o:["핵이 기저부에 정렬 — 고악성도","핵이 흩어짐 — 중등도","핵이 *lumen 쪽(꼭대기)*에 줄지어('upside-down') — 매우 indolent하여 LMP로 재분류 가능","핵이 없음 — 양성"],
+   e:"Clear cell papillary RCC = 투명세포의 작고 진한 핵이 기저부가 아니라 *luminal*에 정렬('upside-down'). 행동이 매우 indolent → LMP로 재분류 가능. 작은 검체에선 clear cell RCC와 혼동 주의."},
+ en:{q:"Characteristic nuclear location and behavior of clear cell papillary RCC?",
+   o:["Nuclei aligned at the base — high grade","Nuclei scattered — intermediate","Nuclei lined up at the *luminal* surface ('upside-down') — very indolent, may be reclassified as LMP","No nuclei — benign"],
+   e:"Clear cell papillary RCC = small dark nuclei aligned at the *luminal* (apical) surface, not the base ('upside-down'). Very indolent → may be reclassified as LMP. On small samples it can mimic clear cell RCC."}},
+
+// ── s4 Pink cells + AML ──
+{s:"s4",a:1,
+ ko:{q:"Oncocytoma(양성)와 chromophobe RCC를 핵으로 가른다 — 옳은 짝은?",
+   o:["Oncocytoma = koilocytic·crinkly 핵 / chromophobe = round·regular","Oncocytoma = round·regular·균일한 핵(저배율에서 '너무 고름') / chromophobe = koilocytic·crinkly 핵 + perinuclear halo","둘 다 동일","oncocytoma = clear cell"],
+   e:"Oncocytoma = 둥글고 규칙적이며 *균일한* 핵(저배율에서 인상적). Chromophobe = koilocytic(구겨진) 핵 + perinuclear halo + 악어가죽 막. eosinophilic chromophobe가 oncocytoma를 흉내내도 *crinkly 핵*이면 chromophobe."},
+ en:{q:"Oncocytoma (benign) vs chromophobe RCC by nuclei — which pairing is correct?",
+   o:["Oncocytoma = koilocytic/crinkly / chromophobe = round/regular","Oncocytoma = round, regular, *uniform* nuclei (strikingly even at low power) / chromophobe = koilocytic/crinkly nuclei + perinuclear halo","Identical","Oncocytoma = clear cells"],
+   e:"Oncocytoma = round, regular, uniform nuclei (the evenness strikes you at low power). Chromophobe = crinkly/koilocytic nuclei + perinuclear halo + alligator-skin membranes. An eosinophilic chromophobe mimics oncocytoma, but crinkly nuclei = chromophobe."}},
+{s:"s4",a:0,
+ ko:{q:"Oncocytoma 진단과 *양립 불가능한*(있으면 oncocytoma라 부르면 안 되는) 소견이 아닌 것은?",
+   o:["규칙적이고 둥근 균일한 핵","Mitosis(분열상)","Papillary architecture","Clear cells / 육안 vascular invasion"],
+   e:"Oncocytoma는 양성이라 *악성 흔적 0일 때만* 붙인다. mitosis·papillary·clear cells·gross vascular invasion은 각각 다른(악성) 진단을 가리켜 oncocytoma를 배제. ①규칙적 핵은 *전형적* 소견이라 양립 가능."},
+ en:{q:"Which feature is NOT incompatible with a diagnosis of oncocytoma?",
+   o:["Regular, round, uniform nuclei","Mitoses","Papillary architecture","Clear cells / gross vascular invasion"],
+   e:"Oncocytoma is benign — diagnosed only with *no* malignant features. Mitoses, papillary architecture, clear cells, and gross vascular invasion each point to another (malignant) Dx → exclude oncocytoma. ① regular nuclei are *typical*, so compatible."}},
+{s:"s4",a:2,
+ ko:{q:"Perinuclear halo(핵 주위 투명 고리)는 어느 종양에? 무슨 뜻?",
+   o:["Oncocytoma — 세포질이 핵까지 빽빽","둘 다 없음","Chromophobe — 핵을 둘러싼 *투명한 세포질 고리*(koilocytic). Oncocytoma는 halo 없음","Papillary RCC — foamy 고리"],
+   e:"Perinuclear halo = 핵을 빙 두른 투명한 빈 고리. Chromophobe에 있고(koilocytic 양상) oncocytoma엔 없음(분홍 세포질이 핵까지 빽빽). halo+crinkly핵=chromophobe / halo없음+round핵=oncocytoma."},
+ en:{q:"Which tumor shows a perinuclear halo, and what is it?",
+   o:["Oncocytoma — cytoplasm dense to the nucleus","Neither","Chromophobe — a *clear ring of cytoplasm* around the nucleus (koilocytic). Oncocytoma has no halo","Papillary RCC — a foamy ring"],
+   e:"Perinuclear halo = a clear empty ring of cytoplasm around the nucleus. Present in chromophobe (koilocytic look), absent in oncocytoma (cytoplasm dense to the nucleus). Halo + crinkly nuclei = chromophobe; no halo + round nuclei = oncocytoma."}},
+{s:"s4",a:0,
+ ko:{q:"Papillary RCC의 거의 pathognomonic한 그림과 Type 1 vs 2의 색은?",
+   o:["Fibrovascular core가 *foamy macrophage*로 가득 + cuboidal 세포 → Type 1 blue(저등급), Type 2 pink(고등급)","Core가 비어 있음 → 둘 다 분홍","Chicken-wire 모세혈관 → Type 1만","Koilocytic 핵 → Type 2만"],
+   e:"Papillary RCC: foamy macrophage로 찬 fibrovascular core를 cuboidal 세포가 덮음(거의 진단적). 저등급 Type 1은 저배율에서 blue, 고등급 Type 2는 pink. psammoma body·hemosiderin도 가능."},
+ en:{q:"Papillary RCC's near-pathognomonic image, and the Type 1 vs 2 colors?",
+   o:["Fibrovascular cores packed with *foamy macrophages* + cuboidal cells → Type 1 blue (low grade), Type 2 pink (high grade)","Empty cores → both pink","Chicken-wire capillaries → Type 1 only","Koilocytic nuclei → Type 2 only"],
+   e:"Papillary RCC: cuboidal cells lining a fibrovascular core packed with foamy macrophages (near-diagnostic). Low-grade Type 1 looks blue at low power; high-grade Type 2 looks pink. Psammoma bodies/hemosiderin may also be seen."}},
+{s:"s4",a:1,
+ ko:{q:"Angiomyolipoma(AML)의 *결정적 단서*와 종양 family·marker는?",
+   o:["지방이 가장 중요 / 암종 family / keratin 양성","두껍게 hyalinized된 *이상 혈관*에서 흘러나오는 평활근(지방 없어도) / PEComa family / HMB-45·Melan-A 양성, S100 음성","사구체 모양 / 림프종 / CD20 양성","유두 구조 / 흑색종 / S100 양성"],
+   e:"AML = angio+myo+lipo. 결정타 = 크고 뒤엉킨 두꺼운 hyalinized 혈관에서 *뻗어나오는* 평활근(지방이 안 보여도). PEComa family → HMB-45/Melan-A 양성, S100 음성. 양성인데 멜라닌 marker가 켜지는 함정."},
+ en:{q:"Angiomyolipoma's *decisive* clue, tumor family, and markers?",
+   o:["Fat is most important / carcinoma family / keratin positive","Smooth muscle spinning off thick *hyalinized abnormal vessels* (even without fat) / PEComa family / HMB-45·Melan-A positive, S100 negative","Glomeruloid / lymphoma / CD20 positive","Papillae / melanoma / S100 positive"],
+   e:"AML = angio + myo + lipo. Key = large, tangled, thick-walled hyalinized vessels with smooth muscle spinning off (even if fat is absent). PEComa family → HMB-45/Melan-A positive, S100 negative. Benign but melanocytic markers light up (a trap)."}},
+{s:"s4",a:2,
+ ko:{q:"AML/PEComa가 *멜라닌세포가 아닌데* HMB-45·Melan-A 양성인 이유로 가장 옳은 것은?",
+   o:["진짜 멜라노사이트라서","keratin이 교차반응해서","HMB-45·Melan-A는 *멜라노솜 단백질*(gp100·MART-1)을 잡는데, PEC가 MITF 경로로 그 단백질을 만들기 때문(평활근+멜라닌 이중분화). S100은 음성","우연한 비특이 염색"],
+   e:"HMB-45/Melan-A는 멜라노솜 단백질을 인식. PEC는 MITF 경로(TSC/mTOR 연관)로 멜라노솜 유전자를 켜 이중분화 → marker 양성. S100은 음성이라 진짜 melanoma/신경집과 구별. (근본 세포기원은 미확립.)"},
+ en:{q:"Why are AML/PEComa HMB-45/Melan-A positive though *not melanocytic*?",
+   o:["They are true melanocytes","Keratin cross-reacts","HMB-45/Melan-A detect *melanosome proteins* (gp100/MART-1), and PECs make them via the MITF program (dual smooth-muscle + melanocytic differentiation). S100 negative","Random nonspecific staining"],
+   e:"HMB-45/Melan-A detect melanosome proteins; PECs switch on melanosomal genes via the MITF program (linked to TSC/mTOR) → dual differentiation → positive. S100 is negative, distinguishing from true melanoma/nerve sheath. (Exact cell of origin unsettled.)"}},
+
+// ── s5 Blue & Pediatric ──
+{s:"s5",a:1,
+ ko:{q:"Metanephric adenoma가 '가장 파란(bluest)' 이유와 닮은 종양은?",
+   o:["세포질이 풍부해서 / oncocytoma","핵이 빽빽하고 세포질이 거의 없어(*높은 N/C ratio*) 매우 파랑 / Wilms tumor의 상피성분과 닮음","clear cell이라 / 부신","지방이 많아 / AML"],
+   e:"Metanephric adenoma = 단조롭고 작고 빽빽한 진한 파란 세포(높은 N/C ratio) → '가장 파랑'. Wilms를 닮음 — 사실 순수 상피형 Wilms의 *성숙(분화)*형으로 볼 수 있음. 양성."},
+ en:{q:"Why is metanephric adenoma the 'bluest,' and what does it resemble?",
+   o:["Abundant cytoplasm / oncocytoma","Tightly packed nuclei with scant cytoplasm (*high N/C ratio*) → very blue / resembles the epithelial component of Wilms tumor","It's clear cell / adrenal","Lots of fat / AML"],
+   e:"Metanephric adenoma = monotonous, small, tightly packed dense blue cells (high N/C ratio) → 'bluest.' Resembles Wilms — essentially a mature (differentiated) form of pure epithelial Wilms. Benign."}},
+{s:"s5",a:2,
+ ko:{q:"Wilms tumor의 triphasic 3성분의 구분으로 옳은 것은?",
+   o:["혈관·근육·지방","상피·신경·연골","Blastema(미분화 파란 sheet) · Epithelium(tubule로 조직화된 파란 세포) · Stroma(분홍 간엽)","clear·pink·blue 세포"],
+   e:"Wilms = 발생 중 신장을 재현. Blastema=가장 미분화 small round blue / Epithelium=blastema가 분화해 원시 tubule 형성 / Stroma=덜 cellular한 분홍 간엽. 한 성분이 우세할 수 있음."},
+ en:{q:"Which correctly distinguishes the triphasic components of Wilms tumor?",
+   o:["Vessel, muscle, fat","Epithelium, nerve, cartilage","Blastema (undifferentiated blue sheets) · Epithelium (blue cells organized into tubules) · Stroma (pink mesenchyme)","Clear, pink, blue cells"],
+   e:"Wilms recapitulates the developing kidney. Blastema = most primitive small round blue; Epithelium = blastema differentiated into primitive tubules; Stroma = less cellular pink mesenchyme. One component may dominate."}},
+{s:"s5",a:0,
+ ko:{q:"Wilms tumor에서 favorable vs *unfavorable* histology를 가르는 것과 그 이유는?",
+   o:["Anaplasia(크고 과염색된 핵 + 비정상/tripolar mitosis) — TP53 연관·화학저항을 시사해 예후 나쁨","종양 크기","낭성 여부","파란 정도"],
+   e:"Anaplasia = 크고 hyperchromatic한 핵 + 비정상(삼극) mitosis. TP53 변이·항암제 저항과 연관 → unfavorable. 찾으려면 광범위 sampling 필요(놓치기 쉬움)."},
+ en:{q:"What separates favorable from *unfavorable* Wilms histology, and why?",
+   o:["Anaplasia (large hyperchromatic nuclei + abnormal/tripolar mitoses) — linked to TP53 & chemoresistance, so worse prognosis","Tumor size","Cystic change","Degree of blueness"],
+   e:"Anaplasia = large hyperchromatic nuclei + abnormal (tripolar) mitoses. Linked to TP53 mutation and chemoresistance → unfavorable. Requires extensive sampling to find."}},
+
+// ── s6 IHC & Molecular ──
+{s:"s6",a:1,
+ ko:{q:"신장에서 HMB-45·Melan-A 양성 + keratin 음성 + S100 음성인 spindle/clear 병변 → 십중팔구?",
+   o:["Melanoma","Angiomyolipoma (PEComa)","Clear cell RCC","Lymphoma"],
+   e:"이 면역양상(HMB-45/Melan-A+ , keratin− , S100−) = AML(PEComa). 멜라노마는 S100+, RCC는 keratin/EMA+. (피부의 'angiolipoma'와 혼동 금지 — 그건 별개.)"},
+ en:{q:"A renal spindle/clear lesion that is HMB-45/Melan-A positive, keratin negative, S100 negative → most likely?",
+   o:["Melanoma","Angiomyolipoma (PEComa)","Clear cell RCC","Lymphoma"],
+   e:"This profile (HMB-45/Melan-A+ , keratin− , S100−) = AML (PEComa). Melanoma is S100+, RCC is keratin/EMA+. (Don't confuse with cutaneous 'angiolipoma' — a different entity.)"}},
+{s:"s6",a:2,
+ ko:{q:"'MiT family translocation RCC' — MiT가 무엇이며 구성원은?",
+   o:["Mitosis 관련 효소군","Mitochondrial 단백질군","*Microphthalmia-associated Transcription factor* family (MITF·TFE3·TFEB 등) — 멜라닌세포·라이소좀 유전자를 켜는 전사인자","미세소관 운동단백질"],
+   e:"MiT = Microphthalmia-associated Transcription factor family (MITF·TFE3·TFEB·TFEC). 멜라닌세포 분화·라이소좀/자가포식 유전자를 켜는 전사인자 — 그래서 MITF가 HMB-45/Melan-A(멜라노솜 단백질)를 켠다."},
+ en:{q:"'MiT family translocation RCC' — what is MiT, and its members?",
+   o:["A group of mitosis enzymes","Mitochondrial proteins","*Microphthalmia-associated Transcription factor* family (MITF, TFE3, TFEB…) — transcription factors switching on melanocytic & lysosomal genes","Microtubule motor proteins"],
+   e:"MiT = Microphthalmia-associated Transcription factor family (MITF, TFE3, TFEB, TFEC). They drive melanocytic differentiation and lysosome/autophagy genes — which is why MITF turns on HMB-45/Melan-A (melanosome proteins)."}},
+{s:"s6",a:0,
+ ko:{q:"Xp11 translocation RCC와 t(6;11) RCC의 용어·특징으로 옳은 것은?",
+   o:["Xp11 = X염색체 단완 11(여기 *TFE3*) 전위 → 유두·투명세포·psammoma body / t(6;11) = 6·11번 염색체 전위(*TFEB*), 이중 세포군 → HMB-45+/keratin−로 AML과 혼동","Xp11 = 11번 단독 결실 / t(6;11) = 정상 변이","둘 다 노인에게만","둘 다 keratin 강양성이라 혼동 없음"],
+   e:"Xp11 = X염색체 short arm band 11(TFE3 위치) 전위 → TFE3 과활성: 유두 구조+투명 plump 세포+psammoma body, 젊은층. t(6;11) = 6번·11번 전위(TFEB): 큰 투명/분홍 세포 + 작은 compact 세포 이중군, HMB-45/Melan-A+ keratin− → AML 흉내."},
+ en:{q:"Correct terminology/features of Xp11 translocation RCC and t(6;11) RCC?",
+   o:["Xp11 = translocation at X chromosome short-arm band 11 (holds *TFE3*) → papillary, clear cells, psammoma bodies / t(6;11) = translocation between chr 6 and 11 (*TFEB*), dual cell population → HMB-45+/keratin− mimicking AML","Xp11 = deletion of chr 11 alone / t(6;11) = a normal variant","Both only in the elderly","Both strongly keratin+ so never confused","Both are benign"],
+   e:"Xp11 = translocation at the X short-arm band 11 (TFE3 locus) → TFE3 overactivated: papillary, clear plump cells, psammoma bodies, younger patients. t(6;11) = translocation between chr 6 and 11 (TFEB): large clear/pink + small compact cells (dual population), HMB-45/Melan-A+ keratin− → mimics angiomyolipoma."}}
+];
+
+let lang=(navigator.language||"ko").toLowerCase().startsWith("ko")?"ko":"en";
+const answered={};
+const el=id=>document.getElementById(id);
+
+function render(){
+  const ui=UI[lang];
+  document.documentElement.lang=lang;
+  el("title").textContent=ui.title;
+  el("meta").textContent=ui.meta;
+  el("resetBtn").textContent=ui.reset;
+  el("revealBtn").textContent=ui.reveal;
+  el("langBtn").textContent=ui.lang;
+  el("foot").textContent=ui.foot;
+  const quiz=el("quiz");quiz.innerHTML='';
+  let lastSec=null;
+  Q.forEach((item,qi)=>{
+    if(item.s!==lastSec){const h=document.createElement('div');h.className='theme';h.textContent=SEC[item.s][lang]||SEC[item.s].en;quiz.appendChild(h);lastSec=item.s;}
+    const L=item[lang];
+    const card=document.createElement('div');card.className='q';
+    card.innerHTML='<div class="qtxt">'+(qi+1)+'. '+L.q+'</div>';
+    L.o.forEach((opt,oi)=>{
+      const btn=document.createElement('button');btn.className='opt';btn.textContent=opt;
+      btn.onclick=()=>choose(qi,oi,card);
+      card.appendChild(btn);
+    });
+    const exp=document.createElement('div');exp.className='exp';exp.innerHTML='<b>'+ui.exp+'</b> '+L.e;
+    card.appendChild(exp);
+    if(qi in answered) markCard(card,qi);
+    quiz.appendChild(card);
+  });
+  updateScore();
+}
+function markCard(card,qi){
+  const item=Q[qi];const opts=card.querySelectorAll('.opt');
+  opts.forEach((b,i)=>{b.disabled=true;if(i===item.a)b.classList.add('correct');if(i===answered[qi].pick&&answered[qi].pick!==item.a)b.classList.add('wrong');});
+  card.querySelector('.exp').classList.add('show');
+}
+function choose(qi,oi,card){
+  if(qi in answered) return;
+  answered[qi]={pick:oi,correct:oi===Q[qi].a};
+  markCard(card,qi);
+  updateScore();
+}
+function updateScore(){
+  const tot=Q.length, done=Object.keys(answered).length, correct=Object.values(answered).filter(x=>x.correct).length;
+  el("score").innerHTML=UI[lang].score(done,tot,correct);
+}
+el("resetBtn").onclick=()=>{for(const k in answered)delete answered[k];render();};
+el("revealBtn").onclick=()=>{
+  document.querySelectorAll('#quiz .q').forEach((card,qi)=>{
+    if(!(qi in answered))answered[qi]={pick:Q[qi].a,correct:true};
+    markCard(card,qi);
+  });
+  updateScore();
+};
+el("langBtn").onclick=()=>{lang=lang==="ko"?"en":"ko";render();};
+render();
+</script>
+</body>
+</html>
