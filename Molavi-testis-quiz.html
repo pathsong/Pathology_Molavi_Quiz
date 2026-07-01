@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Molavi Testis Quiz — 고환 종양 진단</title>
+<meta name="description" content="Bilingual (KR/EN) quiz on Molavi Ch.14 Testis — normal/non-neoplastic, staging, germ cell tumors (seminoma, GCNIS, embryonal, yolk sac, chorio, teratoma), sex cord stromal, lymphoma, IHC. Includes select-all questions.">
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --line:#2a2f3a; --txt:#e6e8ec; --sub:#9aa3b2;
+    --accent:#4f8cff; --good:#1f7a4d; --goodbg:#11321f; --bad:#9b2c2c; --badbg:#341515; --miss:#b8860b; --chip:#222733; --hdr:#202635;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --txt:#1c2128; --sub:#5b6472;
+      --accent:#2563eb; --good:#147a45; --goodbg:#e7f6ee; --bad:#b91c1c; --badbg:#fdeaea; --miss:#a97400; --chip:#eef1f5; --hdr:#eaeefb; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,"Apple SD Gothic Neo",Segoe UI,Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:800px;margin:0 auto;padding:20px 16px 80px}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{font-size:22px;margin:0 0 4px}
+  .meta{color:var(--sub);font-size:13px;margin-bottom:8px}
+  .home{color:var(--accent);text-decoration:none;font-size:13px}
+  .score{position:sticky;top:0;background:var(--bg);padding:10px 0;color:var(--sub);font-size:13px;z-index:4;border-bottom:1px solid var(--line)}
+  .score b{color:var(--txt)}
+  .theme{background:var(--hdr);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin:18px 0 12px;font-weight:700;font-size:14px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 6px;margin-bottom:14px}
+  .qtxt{font-weight:600;margin-bottom:6px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:1px 6px;margin-bottom:10px}
+  .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:transparent;color:var(--txt);
+    padding:11px 13px;border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:.12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.sel{border-color:var(--accent);background:rgba(79,140,255,.10)}
+  .opt.correct{background:var(--goodbg);border-color:var(--good)}
+  .opt.wrong{background:var(--badbg);border-color:var(--bad)}
+  .opt.missed{border-color:var(--miss);border-style:dashed}
+  .opt:disabled{cursor:default}
+  .checkbtn{border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;padding:7px 14px;border-radius:9px;cursor:pointer;font-size:13px;margin:2px 0 10px}
+  .exp{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);margin-top:4px;padding:10px 0;display:none}
+  .exp.show{display:block}
+  .exp b{color:var(--txt)}
+  .controls{display:flex;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--chip);color:var(--txt);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13px}
+  .btn.lang{border-color:var(--accent);color:var(--accent);font-weight:700}
+  .foot{color:var(--sub);font-size:12px;margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+  .legend{font-size:11.5px;color:var(--sub);margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 id="title"></h1>
+      <div class="meta" id="meta"></div>
+      <a class="home" href="index.html">← Hub</a>
+    </div>
+    <button class="btn lang" id="langBtn"></button>
+  </div>
+
+  <div class="score" id="score"></div>
+  <div class="controls">
+    <button class="btn" id="resetBtn"></button>
+    <button class="btn" id="revealBtn"></button>
+  </div>
+  <div id="quiz"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const UI={
+  ko:{title:"Molavi 고환 퀴즈 — 종양 진단",
+    meta:"섹션 = Molavi Ch.14 소제목: 정상·비종양 / Gross·Staging / Seminoma·GCNIS / 기타 GCT / Sex cord·Lymphoma / IHC. 단일선택은 클릭 즉시 채점, '모두 고르시오'는 고른 뒤 [채점]. 해설 = 정답 이유 + 오답 왜 틀림.",
+    reset:"다시 풀기", reveal:"정답 모두 보기", lang:"English", exp:"해설:", check:"채점", multi:"모두 고르시오",
+    score:(d,t,c)=>`푼 문제 <b>${d}/${t}</b> · 정답 <b>${c}</b>`,
+    foot:"학습용 — Molavi, The Practice of Surgical Pathology (Ch.14 Testis). 병기·marker 최종은 AJCC 8판·기관 프로토콜·attending 확인."},
+  en:{title:"Molavi Testis Quiz — Tumor Diagnosis",
+    meta:"Sections = Molavi Ch.14 subheadings: Normal·Non-neoplastic / Gross·Staging / Seminoma·GCNIS / Other GCT / Sex cord·Lymphoma / IHC. Single-answer scores on click; 'select all' scores after you press [Check]. Explanation = why right + why wrong.",
+    reset:"Reset", reveal:"Reveal all answers", lang:"한국어", exp:"Explanation:", check:"Check", multi:"Select all that apply",
+    score:(d,t,c)=>`answered <b>${d}/${t}</b> · correct <b>${c}</b>`,
+    foot:"Educational — Molavi, The Practice of Surgical Pathology (Ch.14 Testis). Defer stage/markers to AJCC 8th, local protocol & attendings."}
+};
+const SEC={
+ s1:{ko:"정상 & 비종양 · Normal & Non-neoplastic",en:"Normal & Non-neoplastic"},
+ s2:{ko:"Gross & Staging · 그로싱·병기",en:"Gross & Staging"},
+ s3:{ko:"Germ Cell — Seminoma · GCNIS · Spermatocytic",en:"Germ Cell — Seminoma · GCNIS · Spermatocytic"},
+ s4:{ko:"Germ Cell — Embryonal · Yolk sac · Chorio · Teratoma",en:"Germ Cell — Embryonal · Yolk sac · Chorio · Teratoma"},
+ s5:{ko:"Sex Cord Stromal & Lymphoma",en:"Sex Cord Stromal & Lymphoma"},
+ s6:{ko:"IHC / Markers",en:"IHC / Markers"}
+};
+
+/* single-answer: a = index. multi: multi:true, a = [indices] */
+const Q=[
+// ── s1 ──
+{s:"s1",a:2,
+ ko:{q:"정상 seminiferous tubule에서 '성공적 spermatogenesis의 표지'(lumen 쪽)와 간질의 테스토스테론 세포는?",
+   o:["Sertoli cell / spermatogonia","Rete testis / 상피","lumen 쪽 tiny spermatid / 간질의 분홍 polygonal Leydig cell","umbrella cell / 근층"],
+   e:"Lumen 쪽 참깨알 같은 spermatid = 정자형성 성공 표지(꼬리 나면 spermatozoa). 간질의 분홍 polygonal Leydig cell = 테스토스테론 생산. tubule 주변부 = spermatogonia, spindly Sertoli = 지지."},
+ en:{q:"In a normal seminiferous tubule, the marker of successful spermatogenesis (luminal side) and the interstitial testosterone cell?",
+   o:["Sertoli cell / spermatogonia","Rete testis / epithelium","Tiny luminal spermatids / interstitial pink polygonal Leydig cells","Umbrella cell / muscularis"],
+   e:"Luminal sesame-seed spermatids = marker of successful spermatogenesis (grow tails → spermatozoa). Interstitial pink polygonal Leydig cells = testosterone. Periphery = spermatogonia; spindly Sertoli = support."}},
+{s:"s1",a:1,
+ ko:{q:"Testicular torsion(꼬임)의 현미경 소견으로 옳은 것은?",
+   o:["육아종성 염증","혈류 차단으로 인한 출혈 + 허혈성(응고) 괴사 — 비특이적","seminoma in situ","림프구 침윤 위주"],
+   e:"Torsion = 정삭 꼬임 → 정맥·동맥 차단 → 출혈성 경색. 현미경은 출혈 + 허혈(응고) 괴사(종양 아님). 응급 — 몇 시간이면 비가역 괴사."},
+ en:{q:"Microscopic picture of testicular torsion?",
+   o:["Granulomatous inflammation","Hemorrhage + ischemic (coagulative) necrosis from vascular occlusion — nonspecific","Seminoma in situ","Mainly lymphocytic infiltrate"],
+   e:"Torsion = cord twist → venous/arterial occlusion → hemorrhagic infarction: hemorrhage + ischemic (coagulative) necrosis (no tumor). A surgical emergency — irreversible within hours."}},
+{s:"s1",a:0,
+ ko:{q:"Cryptorchid(미하강) 고환을 제거하는 주된 이유와 조직 소견은?",
+   o:["Germ cell tumor(seminoma) 위험↑ (+불임) / 작은 atrophic tubule·섬유화·넓어진 간질","악성 확정이라 / 정상 조직","감염 때문 / 육아종","호르몬 과다 / Leydig 증식"],
+   e:"미하강 고환 = germ cell tumor(특히 seminoma) 위험↑ + 불임 위험 → 예방적 제거. 조직 = 작고 위축된 tubule + 섬유화 + 넓어진 간질(극단은 'vanishing testis')."},
+ en:{q:"Main reason to remove a cryptorchid (undescended) testis, and its histology?",
+   o:["↑ germ cell tumor (seminoma) risk (+ infertility) / small atrophic tubules, fibrosis, widened interstitium","Confirmed malignancy / normal tissue","Infection / granulomas","Hormone excess / Leydig hyperplasia"],
+   e:"Undescended testis = ↑ germ cell tumor (esp. seminoma) risk + infertility → prophylactic removal. Histology = small atrophic tubules, fibrosis, widened interstitium (extreme = 'vanishing testis')."}},
+{s:"s1",a:3,
+ ko:{q:"남성 불임 고환생검에서 '정상 spermatogenesis'가 관찰되면 무엇을 시사하나?",
+   o:["Sertoli-only syndrome","Maturation arrest","End-stage testis","원위부 폐색(distal obstruction) — 고환은 정상, 통로가 막힘"],
+   e:"불임 생검 6패턴: Sertoli-only(germ cell 전무)·hypospermatogenesis·maturation arrest(spermatid 미생성)·end-stage(경화·위축)·정상(=원위 폐색 시사). 고환이 정상인데 불임이면 하류 막힘."},
+ en:{q:"In a male-infertility biopsy, 'normal spermatogenesis' implies what?",
+   o:["Sertoli-only syndrome","Maturation arrest","End-stage testis","A distal obstruction — testis is fine, the outflow is blocked"],
+   e:"Six patterns: Sertoli-only (no germ cells), hypospermatogenesis, maturation arrest (no spermatids), end-stage (sclerosis/atrophy), normal (= implies distal obstruction). Normal testis + infertility → blockage downstream."}},
+
+// ── s2 ──
+{s:"s2",a:2,
+ ko:{q:"고환 종양 staging에서 라임(lime) 비유 — 바깥 초록 껍질과 흰 속껍질은? 왜 샘플링?",
+   o:["둘 다 근육층 / 무게 측정","혈관층 / 색 확인","바깥 = tunica vaginalis(중피, visceral/parietal), 속 = tunica albuginea(섬유 흰막) / 종양이 이 층을 뚫었나로 병기가 갈려 침식 부위를 꼭 샘플링","점막층 / 고정"],
+   e:"고환은 '고환 밖 침범 정도'로 staging. 라임 초록껍질=tunica vaginalis(흉막 같은 중피, visceral+parietal), 흰 속=tunica albuginea(섬유막). 종양이 albuginea→vaginalis 뚫으면 upstage → 침식 부위 샘플링 필수(안 하면 understage)."},
+ en:{q:"In testis staging, the lime analogy — outer green rind vs white pith, and why sample them?",
+   o:["Both muscle / to weigh","Vascular layer / check color","Outer = tunica vaginalis (mesothelial, visceral/parietal), inner = tunica albuginea (fibrous white membrane) / penetration through them changes stage, so sample eroding areas","Mucosa / fixation"],
+   e:"Testis is staged by extent beyond the testis. Lime rind = tunica vaginalis (pleura-like mesothelium, visceral + parietal); white pith = tunica albuginea (fibrous). Tumor through albuginea → vaginalis upstages → must sample eroding areas (or understage)."}},
+{s:"s2",a:1,
+ ko:{q:"생식세포종양의 'burned-out'(원발이 퇴축해 fibrotic scar만 남음) 현상이 함정인 이유는?",
+   o:["항상 양성이라서","고환에서 사라져도 *퇴축 전 이미 전이*했을 수 있어 — scar만 봐도 안심 못 함(GCNIS·전이 hunting)","치료가 끝났다는 뜻","림프종으로 변함"],
+   e:"Germ cell tumor는 원발이 거의 완전 퇴축해 흉터만 남길 수 있음. 사라졌다≠나았다 — 퇴축 전 후복막 등으로 전이했을 수 있어. 고환 scar + GCNIS를 적극 hunting."},
+ en:{q:"Why is the 'burned-out' germ cell tumor (regressed to a fibrous scar) a trap?",
+   o:["It's always benign","Even after regressing in the testis it may have *already metastasized* — a scar doesn't mean safe (hunt for GCNIS/mets)","It means treatment is done","It became lymphoma"],
+   e:"Germ cell tumors can regress almost completely, leaving only a scar. Gone ≠ cured — it may have metastasized before regressing (e.g., retroperitoneum). Hunt the scar for GCNIS/residual tumor."}},
+{s:"s2",multi:true,a:[0,1],
+ ko:{q:"[모두 고르시오] 영·유아·소아(infants & children)에서 흔한 고환 종양은?",
+   o:["Yolk sac tumor","Teratoma, prepubertal type","Seminoma","Spermatocytic tumor","Embryonal carcinoma","Lymphoma"],
+   e:"소아 = Yolk sac tumor + prepubertal teratoma (둘 다 GCNIS 무관 경로 → 더 순함). Seminoma·embryonal은 젊은 성인, spermatocytic·lymphoma는 노년."},
+ en:{q:"[Select all] Tumors common in infants & children?",
+   o:["Yolk sac tumor","Teratoma, prepubertal type","Seminoma","Spermatocytic tumor","Embryonal carcinoma","Lymphoma"],
+   e:"Children = yolk sac tumor + prepubertal teratoma (both off the GCNIS pathway → milder). Seminoma/embryonal are young adult; spermatocytic/lymphoma are older."}},
+{s:"s2",multi:true,a:[0,1,2,3],
+ ko:{q:"[모두 고르시오] 젊은 성인(20–40대)에서 흔한 고환 종양은?",
+   o:["Seminoma","Embryonal carcinoma","Choriocarcinoma","Teratoma, postpubertal type + Mixed germ cell tumor","Spermatocytic tumor","Prepubertal yolk sac tumor"],
+   e:"젊은 성인 = seminoma·embryonal·choriocarcinoma·postpubertal teratoma·MGCT (거의 다 GCNIS 기원 악성). spermatocytic·prepubertal yolk sac은 이 연령대 아님."},
+ en:{q:"[Select all] Tumors common in young adults (20s–40s)?",
+   o:["Seminoma","Embryonal carcinoma","Choriocarcinoma","Postpubertal teratoma + mixed germ cell tumor","Spermatocytic tumor","Prepubertal yolk sac tumor"],
+   e:"Young adults = seminoma, embryonal, choriocarcinoma, postpubertal teratoma, MGCT (almost all GCNIS-derived). Spermatocytic and prepubertal yolk sac don't fit this age."}},
+{s:"s2",multi:true,a:[0,1,2],
+ ko:{q:"[모두 고르시오] 노년(older adults)에서 (상대적으로) 흔한 고환 종양은?",
+   o:["Spermatocytic tumor","Lymphoma","Sex cord stromal tumors","Prepubertal teratoma","Yolk sac tumor","Embryonal carcinoma"],
+   e:"노년 = spermatocytic tumor·lymphoma(DLBCL)·sex cord stromal. prepubertal teratoma·yolk sac은 소아, embryonal은 젊은 성인."},
+ en:{q:"[Select all] Tumors (relatively) common in older adults?",
+   o:["Spermatocytic tumor","Lymphoma","Sex cord stromal tumors","Prepubertal teratoma","Yolk sac tumor","Embryonal carcinoma"],
+   e:"Older = spermatocytic tumor, lymphoma (DLBCL), sex cord stromal. Prepubertal teratoma/yolk sac are pediatric; embryonal is young-adult."}},
+
+// ── s3 ──
+{s:"s3",a:2,
+ ko:{q:"Seminoma가 저배율에서 'deceptively bland'한 이유는?",
+   o:["세포가 극도로 다형성이라","괴사가 많아","세포가 매우 균일(monomorphic)해 악성처럼 안 보여 방심하기 쉬워","림프구가 종양을 가려서"],
+   e:"Seminoma = fried-egg 투명세포 + 겹치지 않는 큰 둥근 핵 + 중심 nucleoli + septa lymphocyte + packet. 세포가 너무 균일해 저배율에선 밋밋(bland)해 보여 놓치기 쉬움."},
+ en:{q:"Why is seminoma 'deceptively bland' at low power?",
+   o:["Cells are extremely pleomorphic","Lots of necrosis","Cells are very monomorphic, so it doesn't look malignant — easy to under-call","Lymphocytes hide the tumor"],
+   e:"Seminoma = fried-egg clear cells + big round non-overlapping nuclei + central nucleoli + septal lymphocytes + packets. So uniform it looks bland at low power and can be missed."}},
+{s:"s3",a:1,
+ ko:{q:"GCNIS(germ cell neoplasia in situ)에 대해 옳은 것은?",
+   o:["침윤암을 뜻함","Seminoma in situ로 seminiferous tubule에 국한 — 4×로 dark/large/fried-egg 세포 튀는 tubule 찾기","prepubertal teratoma에 흔히 동반","항상 육안으로 보임"],
+   e:"GCNIS = seminoma in situ, tubule 내 국한. 4×로 어둡거나·크거나·fried-egg 세포가 튀는 tubule을 스캔. prepubertal teratoma/yolk sac·spermatocytic엔 *없음*."},
+ en:{q:"Which is true of GCNIS (germ cell neoplasia in situ)?",
+   o:["It means invasive carcinoma","Seminoma in situ confined to seminiferous tubules — scan at 4× for tubules with dark/large/fried-egg cells","Commonly seen in prepubertal teratoma","Always grossly visible"],
+   e:"GCNIS = seminoma in situ, confined to tubules. Scan at 4× for tubules with dark/large/fried-egg cells. NOT seen in prepubertal teratoma/yolk sac or spermatocytic tumor."}},
+{s:"s3",a:3,
+ ko:{q:"Spermatocytic tumor가 일반 seminoma와 결정적으로 다른 점이 *아닌* 것은?",
+   o:["전이하지 않고 노년에 발생","세 가지 세포 크기(small·medium·large), 염증 없음","MGCT에 안 섞이고 GCNIS 동반 없음, PLAP 음성","PLAP·OCT3/4·c-kit 강양성"],
+   e:"Spermatocytic tumor는 GCNIS 무관 경로라 PLAP·OCT3/4·c-kit *음성*(=④가 틀림). indolent·노년·3 cell size·염증 없음·MGCT/GCNIS 무관은 모두 맞음. 이름이 비슷해 반대로 외우기 쉬움."},
+ en:{q:"Which is NOT a way spermatocytic tumor differs from ordinary seminoma?",
+   o:["Does not metastasize; occurs in older men","Three cell sizes (small/medium/large), no inflammation","Not in MGCT, no GCNIS, PLAP negative","Strongly PLAP/OCT3/4/c-kit positive"],
+   e:"Spermatocytic tumor is off the GCNIS pathway → PLAP/OCT3/4/c-kit are *negative* (so ④ is false). Indolent, older, three cell sizes, no inflammation, not in MGCT/GCNIS are all true. Similar name → easy to reverse."}},
+
+// ── s4 ──
+{s:"s4",a:0,
+ ko:{q:"Embryonal carcinoma('the ugly one')에 대해 옳은 것은?",
+   o:["Pleomorphic·overlapping·molding 핵 + 큰 nucleoli; 상피양이라 keratin 양성(함정)이나 germ cell marker로 구제","단조롭고 얌전한 핵","Schiller-Duval body가 특징","syncytiotrophoblast로 구성"],
+   e:"Embryonal = 가장 험악한 핵(pleomorphic·overlapping·molding). 상피양·keratin 양성이라 암종처럼 보이는 함정 → 하지만 germ cell marker(OCT3/4·CD30)로 구제. ②seminoma/yolk sac, ③yolk sac, ④choriocarcinoma."},
+ en:{q:"Which is true of embryonal carcinoma ('the ugly one')?",
+   o:["Pleomorphic, overlapping, molding nuclei + large nucleoli; epithelioid → keratin positive (trap) but rescued by germ cell markers","Bland, uniform nuclei","Characterized by Schiller-Duval bodies","Composed of syncytiotrophoblasts"],
+   e:"Embryonal = ugliest nuclei (pleomorphic, overlapping, molding). Epithelioid + keratin positive → mimics carcinoma, but germ cell markers (OCT3/4, CD30) rescue. ② seminoma/yolk sac, ③ yolk sac, ④ choriocarcinoma."}},
+{s:"s4",a:2,
+ ko:{q:"Yolk sac tumor의 거의 pathognomonic한 구조물과 소아에서의 위상은?",
+   o:["Michaelis-Gutmann body / 성인 전용","Psammoma body / 드묾","Schiller-Duval body(사구체양) / 소아에서 가장 흔하고 *순수형(pure)*으로 발생","Reinke crystal / 노년"],
+   e:"Yolk sac = Schiller-Duval body(사구체 닮음, 항상 보이진 않음) + microcystic·reticular 패턴. 핵은 seminoma보다 험하나 embryonal보다 bland(얌전). 소아 최다·pure. Marker=AFP."},
+ en:{q:"Yolk sac tumor's near-pathognomonic structure and its status in children?",
+   o:["Michaelis-Gutmann body / adults only","Psammoma body / rare","Schiller-Duval body (glomeruloid) / most common in children, occurring in *pure* form","Reinke crystal / elderly"],
+   e:"Yolk sac = Schiller-Duval body (glomeruloid, not always present) + microcystic/reticular. Nuclei more atypical than seminoma but blander than embryonal. Most common in children, pure. Marker = AFP."}},
+{s:"s4",a:1,
+ ko:{q:"Choriocarcinoma에 대해 옳은 것은?",
+   o:["단일 세포형, 호르몬 없음","Cytotrophoblast + syncytiotrophoblast 두 세포형, hCG 생산, 혈관 침습으로 광범위 전이","GCNIS의 일종","PLAP로 진단"],
+   e:"Choriocarcinoma = 태반 융모의 두 층(cyto=안쪽 단핵 줄기, syncytio=바깥 다핵 hCG 분비)이 *짝지어*. 혈관 침습에 특출 → 조기 광범위 전이. 다른 GCT에 syncytio 단독으로 있어도 chorio 아님."},
+ en:{q:"Which is true of choriocarcinoma?",
+   o:["Single cell type, no hormone","Cytotrophoblast + syncytiotrophoblast (two cell types), makes hCG, widespread mets via vascular invasion","A form of GCNIS","Diagnosed by PLAP"],
+   e:"Choriocarcinoma = the two placental villous layers *paired* (cyto = inner mononuclear stem; syncytio = outer multinucleated, secretes hCG). Excellent vascular invasion → early widespread mets. Isolated syncytiotrophoblasts in other GCTs ≠ choriocarcinoma."}},
+{s:"s4",a:0,
+ ko:{q:"Teratoma의 prepubertal vs postpubertal(남성) 악성도 차이는?",
+   o:["Prepubertal = immature 요소 있어도 항상 양성 / postpubertal 남성 = mature·immature 무관하게 거의 항상 악성 (여성과 반대)","둘 다 항상 양성","둘 다 항상 악성","prepubertal이 더 악성"],
+   e:"핵심 반전: prepubertal teratoma는 immature여도 *양성*(난소 teratoma와 반대). Postpubertal 남성 teratoma는 조직 성숙도 무관 *거의 항상 악성*(대개 MGCT). Monodermal ectoderm형 = epidermoid/dermoid cyst(양성)."},
+ en:{q:"Malignancy difference: prepubertal vs postpubertal (male) teratoma?",
+   o:["Prepubertal = always benign even with immature elements / postpubertal male = almost always malignant regardless of maturity (opposite of females)","Both always benign","Both always malignant","Prepubertal is more malignant"],
+   e:"Key flip: prepubertal teratoma is benign even if immature (opposite of ovarian). Postpubertal male teratoma is almost always malignant regardless of maturity (usually MGCT). Monodermal ectodermal types = epidermoid/dermoid cyst (benign)."}},
+
+// ── s5 ──
+{s:"s5",a:2,
+ ko:{q:"Leydig cell tumor vs Sertoli cell tumor + 악성 예측으로 옳은 것은?",
+   o:["Leydig = 원시 tubule·spindly / Sertoli = 분홍 oncocytic","둘 다 germ cell 종양","Leydig = 분홍 oncocytic·둥근 핵 / Sertoli = 원시 tubule·spindly; 둘 다 대개 양성, ~10% 나쁘게 행동, hard criteria 없음","항상 악성"],
+   e:"Leydig = 정상 Leydig 닮은 분홍 oncocytic·둥근 핵 / Sertoli = 원시 tubule·spindly(±hyalinized stroma). 둘 다 대개 양성, 약 10%가 나쁘게 행동하나 딱 떨어지는 악성 기준 없음(atypia·mitosis·괴사·혈관침범·고환밖 침범이면 나쁨)."},
+ en:{q:"Leydig vs Sertoli cell tumor + malignancy prediction — which is correct?",
+   o:["Leydig = primitive tubules/spindly / Sertoli = pink oncocytic","Both are germ cell tumors","Leydig = pink oncocytic, round nuclei / Sertoli = primitive tubules, spindly; both usually benign, ~10% behave badly, no hard criteria","Always malignant"],
+   e:"Leydig = pink oncocytic with round nuclei (mimics normal Leydig); Sertoli = primitive tubules, spindly (± hyalinized stroma). Both usually benign; ~10% behave badly with no hard criteria (worry with atypia, mitoses, necrosis, vascular invasion, spread beyond testis)."}},
+{s:"s5",a:1,
+ ko:{q:"고환 lymphoma에 대해 옳은 것은?",
+   o:["Seminoma보다 젊고 GCNIS 동반","Seminoma 닮지만 덜 균일; 보통 DLBCL(CD20+); seminoma보다 고령; GCNIS 없음","Schiller-Duval body","hCG 양성"],
+   e:"고환 lymphoma = 대개 DLBCL(CD20+, 큰 핵·vesicular chromatin·큰 nucleoli). seminoma를 닮지만 덜 homogeneous, 더 고령, GCNIS 없음(→ germ cell tumor와 구별 단서)."},
+ en:{q:"Which is true of testicular lymphoma?",
+   o:["Younger than seminoma and has GCNIS","Resembles seminoma but less homogeneous; usually DLBCL (CD20+); older than seminoma; no GCNIS","Schiller-Duval bodies","hCG positive"],
+   e:"Testicular lymphoma = usually DLBCL (CD20+, large nuclei, vesicular chromatin, big nucleoli). Mimics seminoma but less homogeneous, older patients, no GCNIS (a clue vs germ cell tumor)."}},
+
+// ── s6 ──
+{s:"s6",multi:true,a:[0,1,2],
+ ko:{q:"[모두 고르시오] GCNIS / Seminoma에서 양성인 marker는?",
+   o:["OCT3/4","c-kit (CD117)","PLAP","AFP","hCG","CD20"],
+   e:"GCNIS/seminoma = OCT3/4·c-kit·PLAP 양성(원시 germ cell 프로그램). AFP=yolk sac, hCG=choriocarcinoma, CD20=lymphoma."},
+ en:{q:"[Select all] Markers positive in GCNIS / seminoma?",
+   o:["OCT3/4","c-kit (CD117)","PLAP","AFP","hCG","CD20"],
+   e:"GCNIS/seminoma = OCT3/4, c-kit, PLAP positive (primordial germ-cell program). AFP = yolk sac, hCG = choriocarcinoma, CD20 = lymphoma."}},
+{s:"s6",multi:true,a:[0,1,2],
+ ko:{q:"[모두 고르시오] Embryonal carcinoma에서 양성인 marker는?",
+   o:["Keratin","OCT3/4","CD30","hCG","AFP","c-kit"],
+   e:"Embryonal = keratin(함정 — 암종처럼 보임) + OCT3/4 + CD30. hCG=chorio, AFP=yolk sac, c-kit=seminoma. (embryonal은 보통 c-kit 음성.)"},
+ en:{q:"[Select all] Markers positive in embryonal carcinoma?",
+   o:["Keratin","OCT3/4","CD30","hCG","AFP","c-kit"],
+   e:"Embryonal = keratin (trap — mimics carcinoma) + OCT3/4 + CD30. hCG = chorio, AFP = yolk sac, c-kit = seminoma. (Embryonal is usually c-kit negative.)"}},
+{s:"s6",multi:true,a:[0,1],
+ ko:{q:"[모두 고르시오] PLAP(placental alkaline phosphatase) *양성*인 것은? (함정 주의)",
+   o:["Seminoma","GCNIS","Spermatocytic tumor","Lymphoma","Leydig cell tumor"],
+   e:"PLAP 양성 = seminoma·GCNIS(원시 germ cell 프로그램). *Spermatocytic tumor는 PLAP 음성*(GCNIS 무관 경로) — 이름 비슷해 헷갈리는 함정. lymphoma·Leydig은 무관."},
+ en:{q:"[Select all] Which are PLAP (placental alkaline phosphatase) *positive*? (mind the trap)",
+   o:["Seminoma","GCNIS","Spermatocytic tumor","Lymphoma","Leydig cell tumor"],
+   e:"PLAP positive = seminoma & GCNIS (primordial germ-cell program). *Spermatocytic tumor is PLAP negative* (off the GCNIS pathway) — the similarly-named trap. Lymphoma/Leydig unrelated."}},
+{s:"s6",a:3,
+ ko:{q:"Marker–종양 매칭이 틀린 것은?",
+   o:["Yolk sac — AFP","Choriocarcinoma — hCG","Lymphoma — CD20","Spermatocytic tumor — PLAP 양성"],
+   e:"Spermatocytic tumor는 PLAP *음성*이라 ④가 틀림. Yolk sac=AFP, chorio=hCG, lymphoma=CD20은 맞는 짝."},
+ en:{q:"Which marker–tumor pairing is INCORRECT?",
+   o:["Yolk sac — AFP","Choriocarcinoma — hCG","Lymphoma — CD20","Spermatocytic tumor — PLAP positive"],
+   e:"Spermatocytic tumor is PLAP *negative*, so ④ is wrong. Yolk sac = AFP, chorio = hCG, lymphoma = CD20 are correct."}}
+];
+
+let lang=(navigator.language||"ko").toLowerCase().startsWith("ko")?"ko":"en";
+const answered={};
+const sel={};        // qi -> Set of chosen indices (multi, pre-check)
+const el=id=>document.getElementById(id);
+const arrEq=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
+
+function render(){
+  const ui=UI[lang];
+  document.documentElement.lang=lang;
+  el("title").textContent=ui.title;
+  el("meta").textContent=ui.meta;
+  el("resetBtn").textContent=ui.reset;
+  el("revealBtn").textContent=ui.reveal;
+  el("langBtn").textContent=ui.lang;
+  el("foot").textContent=ui.foot;
+  const quiz=el("quiz");quiz.innerHTML='';
+  let lastSec=null;
+  Q.forEach((item,qi)=>{
+    if(item.s!==lastSec){const h=document.createElement('div');h.className='theme';h.textContent=SEC[item.s][lang]||SEC[item.s].en;quiz.appendChild(h);lastSec=item.s;}
+    const L=item[lang];
+    const card=document.createElement('div');card.className='q';
+    let head='<div class="qtxt">'+(qi+1)+'. '+L.q+'</div>';
+    if(item.multi) head+='<span class="tag">'+ui.multi+'</span>';
+    card.innerHTML=head;
+    L.o.forEach((opt,oi)=>{
+      const btn=document.createElement('button');btn.className='opt';btn.textContent=opt;
+      btn.onclick=()=> item.multi ? toggle(qi,oi,card) : choose(qi,oi,card);
+      card.appendChild(btn);
+    });
+    if(item.multi){
+      const cb=document.createElement('button');cb.className='checkbtn';cb.textContent=ui.check;
+      cb.onclick=()=>checkMulti(qi,card);
+      card.appendChild(cb);
+    }
+    const exp=document.createElement('div');exp.className='exp';exp.innerHTML='<b>'+ui.exp+'</b> '+L.e;
+    card.appendChild(exp);
+    if(qi in answered) markCard(card,qi); else if(item.multi) paintSel(card,qi);
+    quiz.appendChild(card);
+  });
+  updateScore();
+}
+function paintSel(card,qi){
+  const chosen=sel[qi]||new Set();
+  card.querySelectorAll('.opt').forEach((b,i)=>b.classList.toggle('sel',chosen.has(i)));
+}
+function toggle(qi,oi,card){
+  if(qi in answered) return;
+  if(!sel[qi]) sel[qi]=new Set();
+  sel[qi].has(oi)?sel[qi].delete(oi):sel[qi].add(oi);
+  paintSel(card,qi);
+}
+function checkMulti(qi,card){
+  if(qi in answered) return;
+  const chosen=[...(sel[qi]||new Set())];
+  answered[qi]={correct:arrEq(chosen,Q[qi].a)};
+  markCard(card,qi);
+  updateScore();
+}
+function choose(qi,oi,card){
+  if(qi in answered) return;
+  answered[qi]={pick:oi,correct:oi===Q[qi].a};
+  markCard(card,qi);
+  updateScore();
+}
+function markCard(card,qi){
+  const item=Q[qi];const opts=card.querySelectorAll('.opt');
+  const cb=card.querySelector('.checkbtn'); if(cb) cb.style.display='none';
+  if(item.multi){
+    const correct=item.a, chosen=[...(sel[qi]||new Set())];
+    opts.forEach((b,i)=>{
+      b.disabled=true; b.classList.remove('sel');
+      if(correct.includes(i)&&chosen.includes(i)) b.classList.add('correct');
+      else if(!correct.includes(i)&&chosen.includes(i)) b.classList.add('wrong');
+      else if(correct.includes(i)&&!chosen.includes(i)) b.classList.add('missed');
+    });
+  } else {
+    opts.forEach((b,i)=>{b.disabled=true;if(i===item.a)b.classList.add('correct');if(i===answered[qi].pick&&answered[qi].pick!==item.a)b.classList.add('wrong');});
+  }
+  card.querySelector('.exp').classList.add('show');
+}
+function updateScore(){
+  const tot=Q.length, done=Object.keys(answered).length, correct=Object.values(answered).filter(x=>x.correct).length;
+  el("score").innerHTML=UI[lang].score(done,tot,correct);
+}
+el("resetBtn").onclick=()=>{for(const k in answered)delete answered[k];for(const k in sel)delete sel[k];render();};
+el("revealBtn").onclick=()=>{
+  Q.forEach((item,qi)=>{ if(!(qi in answered)){ if(item.multi){sel[qi]=new Set(item.a);answered[qi]={correct:true};} else answered[qi]={pick:item.a,correct:true}; } });
+  render();
+};
+el("langBtn").onclick=()=>{lang=lang==="ko"?"en":"ko";render();};
+render();
+</script>
+</body>
+</html>
